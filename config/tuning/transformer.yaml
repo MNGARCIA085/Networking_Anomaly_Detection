@@ -1,0 +1,98 @@
+
+
+data:
+  windowing:
+    size:
+      choices: [1, 5, 10, 20]
+
+
+prep:
+  scaler:
+    names: [standard, minmax]
+
+  temporal:
+    delta: true
+
+
+model_space:
+
+  d_model:
+    name: d_model
+    type: categorical
+    choices: [32, 64, 128]
+
+  nhead:
+    name: nhead
+    type: categorical
+    choices: [2, 4, 8]
+
+  num_encoder_layers:
+    name: num_encoder_layers
+    type: int
+    low: 1
+    high: 4
+
+  dim_feedforward:
+    name: dim_feedforward
+    type: categorical
+    choices: [64, 128, 256]
+
+  dropout:
+    name: dropout
+    type: float
+    low: 0.0
+    high: 0.3
+
+
+training_space:
+
+  optimizer:
+    names: [adam, sgd]
+
+    adam:
+      lr:
+        low: 1e-4
+        high: 1e-2
+        log: true
+
+      betas:
+        choices:
+          - [0.9, 0.999]
+          - [0.8, 0.999]
+
+    sgd:
+      lr:
+        low: 1e-3
+        high: 1e-1
+        log: true
+
+      momentum:
+        low: 0.0
+        high: 0.9
+
+      weight_decay:
+        low: 1e-6
+        high: 1e-2
+        log: true
+
+
+  callbacks:
+    print_loss: true
+
+    early_stopping:
+      enabled: true
+      patience:
+        low: 3
+        high: 10
+
+
+  epochs:
+    name: epochs
+    type: int
+    low: 5
+    high: 20
+
+  batch_size:
+    name: batch_size
+    type: categorical
+    choices: [32, 64]

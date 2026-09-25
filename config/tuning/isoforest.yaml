@@ -1,0 +1,44 @@
+
+
+data:
+  windowing:
+    size:
+      choices: [1, 5, 10, 20]
+
+prep:
+  scaler:
+    names: [standard, minmax]
+
+  feature_selection:
+      enabled: true
+      names:
+        - variance_threshold
+      threshold:
+        low: 0.0
+        high: 0.1
+
+
+
+  dimensionality:
+    enabled: true
+    names:
+      - pca
+      - truncated_svd
+    n_components:
+      low: 1
+      high: 8
+
+
+
+model_space:
+  n_estimators:
+    name: n_estimators
+    type: int
+    low: 50
+    high: 300
+
+  contamination:
+    name: contamination
+    type: float
+    low: 0.01
+    high: 0.2

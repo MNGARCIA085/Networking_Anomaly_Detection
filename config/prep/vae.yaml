@@ -1,0 +1,7 @@
+scaler:
+  name: standard
+  params:
+    with_mean: true
+    with_std: true
+
+

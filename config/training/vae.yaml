@@ -1,0 +1,16 @@
+batch_size: 32
+epochs: 5
+type: "vae"
+
+optimizer:
+  name: adam
+  params:
+    lr: 0.001
+    betas: [0.9, 0.999]
+
+
+callbacks:
+  - name: print_loss
+  - name: early_stopping
+    params:
+      patience: 5

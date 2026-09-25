@@ -1,0 +1,12 @@
+train_path: data/servers/X_part2.npy
+val_path: data/servers/X_val_part2.npy
+y_val_path: data/servers/y_val_part2.npy
+test_path: data/servers/X_test.npy
+y_test_path: data/servers/y_test.npy
+
+
+
+windowing:
+  enabled: true
+  size: 10
+  stride: 1

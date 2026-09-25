@@ -1,0 +1,7 @@
+input_dim: 11
+
+encoder_dims: [8, 4]
+latent_dim: 2
+decoder_dims: [4, 8]
+
+beta: 1.0

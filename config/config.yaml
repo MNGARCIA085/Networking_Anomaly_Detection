@@ -1,0 +1,31 @@
+
+defaults:
+  - _self_
+  - model_type: ae
+  - data: data
+  - models: ae
+  - training: ae
+  - tuning: ae
+  - thresholding: ae
+  - override hydra/launcher: joblib
+
+random_state: 42
+experiment_name: network_anomaly_detection
+
+
+
+paths:
+  root_dir: .
+  mlflow_db: mlflow.db
+  mlflow_artifacts: mlruns
+
+
+
+tracking:
+  enabled: true
+  #uri: "sqlite:///mlflow.db"
+
+
+hydra:
+  launcher:
+    n_jobs: 1 # max. number of concurrent jobs

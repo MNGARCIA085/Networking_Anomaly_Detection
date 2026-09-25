@@ -1,0 +1,9 @@
+defaults:
+  - /data: data
+  - /models: vae
+  - /training: vae
+  - /tuning: vae
+  - /prep: vae
+  - /thresholding: vae
+
+name: vae

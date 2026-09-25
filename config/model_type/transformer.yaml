@@ -1,0 +1,9 @@
+defaults:
+  - /data: data
+  - /models: transformer
+  - /training: transformer
+  - /tuning: transformer
+  - /prep: transformer
+  - /thresholding: transformer
+
+name: transformer

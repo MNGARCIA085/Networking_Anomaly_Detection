@@ -1,0 +1,8 @@
+input_dim: 11
+seq_len: 20
+
+d_model: 64
+nhead: 4
+num_encoder_layers: 2
+dim_feedforward: 128
+dropout: 0.1

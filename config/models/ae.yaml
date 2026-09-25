@@ -1,0 +1,3 @@
+input_dim: 11
+encoder_dims: [8, 4]
+decoder_dims: [8, ]

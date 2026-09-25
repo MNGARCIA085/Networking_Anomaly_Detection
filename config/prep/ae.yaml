@@ -1,0 +1,20 @@
+imputation:
+  enabled: true
+  name: simple
+  params:
+    strategy: median
+
+transform:
+  enabled: true
+  name: power
+  params:
+    method: yeo-johnson
+    standardize: false
+
+scaler:
+  name: standard
+  params:
+    with_mean: true
+    with_std: true
+
+
