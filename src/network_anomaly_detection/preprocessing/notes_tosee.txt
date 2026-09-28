@@ -1,0 +1,118 @@
+### Preprocessing component interface
+
+Preprocessing components are transformations that can be composed inside a `PreprocessingPipeline`.
+
+A component must follow a **scikit-learn-compatible transformer interface**:
+
+```python
+fit(X, y=None)
+transform(X)
+fit_transform(X, y=None)
+```
+
+The interface has the following semantics:
+
+* `fit(X, y=None)` learns any parameters required by the transformation and returns the fitted component.
+* `transform(X)` applies the fitted transformation.
+* `fit_transform(X, y=None)` fits the component and transforms the data.
+
+This interface allows the project to use both **scikit-learn transformers** and custom preprocessing components without requiring separate handling.
+
+For example, a scikit-learn scaler can be used directly:
+
+```python
+StandardScaler()
+```
+
+while a custom transformation can implement the same interface:
+
+```python
+class DeltaTransform:
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        ...
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+```
+
+### Stateful and stateless components
+
+Components can be either **stateful** or **stateless**.
+
+A stateful component learns parameters during `fit()`.
+
+```text
+StandardScaler
+     │
+     ├── fit(X_train)
+     │      └── learns mean/std
+     │
+     └── transform(X_val)
+            └── uses learned parameters
+```
+
+A stateless component does not learn parameters. Its `fit()` method exists only to satisfy the common interface.
+
+```text
+DeltaTransform
+     │
+     ├── fit(X)
+     │      └── no-op
+     │
+     └── transform(X)
+            └── computes differences
+```
+
+Therefore, **`fit()` does not imply that a component must learn parameters**. It is part of the common interface.
+
+### Pipeline contract
+
+`PreprocessingPipeline` assumes that every component follows this interface:
+
+```text
+Component
+   │
+   ├── fit(X, y=None)
+   ├── transform(X)
+   └── fit_transform(X, y=None)
+```
+
+This allows components to be chained:
+
+```text
+X
+ │
+ ▼
+Component 1
+ │
+ ▼
+Component 2
+ │
+ ▼
+Component 3
+ │
+ ▼
+X'
+```
+
+The pipeline does not need to know whether a component is a scikit-learn transformer, a custom stateful transformation, or a stateless transformation.
+
+### Adding a new component
+
+To add a new component:
+
+1. Implement the common transformer interface.
+2. Add the component to the appropriate registry/factory.
+3. Expose its parameters through the component's configuration.
+4. Add it to the relevant `Prep` implementation if needed.
+
+The component should **not** contain model-specific orchestration. It should implement one preprocessing operation and remain independently reusable.
+
+In particular, custom components should follow the same interface as the scikit-learn components they replace or complement.
+
+
+I think this wording solves the ambiguity you're pointing at: you don't actually need to define your own BaseComponent class just to establish the interface. The contract is behavioral: anything with the three methods can participate in your pipeline.

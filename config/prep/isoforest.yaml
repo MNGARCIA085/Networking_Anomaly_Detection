@@ -1,27 +1,41 @@
-transform:
-  enabled: false
-  name: log1p
-
-scaler:
-  name: standard
-  params:
-    with_mean: true
-    with_std: true
-
-feature_selection:
-  enabled: true
-  name: variance_threshold
-  params:
-    threshold: 0.01
-
-dimensionality:
-  enabled: true
-  name: pca
-  params:
-    n_components: 7
-    whiten: false
 
 
+pointwise:
 
-contamination_filter:
-  enabled: false
+  scaler:
+    enable: true
+    name: standard
+    params:
+      with_mean: true
+      with_std: true
+
+  feature_selection:
+    enable: false
+    name: variance_threshold
+    params:
+      threshold: 0.01
+
+  dim_reduction:
+    enable: true
+    name: pca
+    params:
+      n_components: 4
+      whiten: false
+
+  transform:
+    enable: false
+    name: power
+    params:
+      method: yeo-johnson
+
+  contamination_filter:
+    enabled: false
+
+
+
+windowing:
+  size: 5
+  stride: 1
+
+
+

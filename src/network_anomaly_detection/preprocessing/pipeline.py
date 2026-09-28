@@ -2,6 +2,7 @@ import joblib
 
 
 
+
 class PreprocessingPipeline:
 
     def __init__(self, steps):
@@ -9,7 +10,8 @@ class PreprocessingPipeline:
 
     def fit(self, X):
         for step in self.steps:
-            X = step.fit_transform(X)
+            step.fit(X)
+            X = step.transform(X)
         return self
 
     def transform(self, X):
@@ -18,8 +20,9 @@ class PreprocessingPipeline:
         return X
 
     def fit_transform(self, X):
-        self.fit(X)
-        return self.transform(X)
+        for step in self.steps:
+            X = step.fit_transform(X)
+        return X
 
 
 

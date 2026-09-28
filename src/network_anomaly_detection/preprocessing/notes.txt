@@ -1,0 +1,146 @@
+Overall execution:
+
+X
+ │
+ ▼
+[ Pointwise Pipeline ]
+ │
+ ▼
+[ Windowing ] ─────────── y
+ │                         │
+ ▼                         │
+[ Temporal Pipeline ]      │
+ │                         │
+ ▼                         ▼
+X_processed             y_windowed
+
+
+
+---------------
+BasePrep constructs and orchestrates the preprocessing stages.
+
+
+
+Pointwise and temporal stages are implemented as PreprocessingPipeline objects, which contain an ordered sequence of preprocessing components. Windowing is a separate stage because it operates on both X and y.
+
+
+----------
+
+
+NEW PREP
+   │
+   └── extends BasePrep
+          │
+          ├── defines pointwise stage
+          │      └── PreprocessingPipeline
+          │             └── components
+          │
+          ├── uses/configures windowing
+          │
+          └── defines temporal stage
+                 └── PreprocessingPipeline
+                        └── components
+
+
+
+IMPORTANT DECISION:
+
+
+
+Prep
+  = transforms the data
+
+Model
+  = decides what representation it consumes
+
+  ADAPT iput belongs to the model then
+
+
+
+  So your pipeline should end with the model-independent representation:
+
+Raw X
+ ↓
+Feature selection
+ ↓
+Power transform
+ ↓
+Scaler
+ ↓
+PCA
+ ↓
+Windowing
+ ↓
+Temporal prep
+ ↓
+X_processed
+
+Then the model decides how to consume it:
+
+X_processed
+     │
+     ├── IsoForest → flatten → (N, seq_len × features)
+     │
+     ├── AE        → flatten → (N, seq_len × features)
+     │
+     └── Transformer → keep 3D sequence
+                       (N, seq_len, features)
+
+
+
+Why I prefer this
+
+Flattening isn't really preprocessing. It is an input representation requirement of the model.
+
+For example, suppose preprocessing produces:
+
+X.shape == (1000, 5, 7)
+
+You don't want Prep to decide:
+
+X → (1000, 35)
+
+because then a sequence model couldn't consume the same processed representation.
+
+The important boundary is:
+
+Prep produces the canonical processed data; the model adapts that data to its required input shape.
+
+
+--------------
+Add a new Prep
+
+Create the model-specific prep.py.
+Create a class inheriting from BasePrep.
+Implement:
+       build_pointwise_prep()
+       build_temporal_prep()
+Register the Prep in the Prep registry.
+Add the corresponding YAML configuration.
+Test the full fit → transform flow.
+
+
+
+Add a new Component
+
+
+Create the component class.
+       Implement the common scikit-learn-compatible transformer interface:
+              fit(X, y=None)
+              transform(X)
+              fit_transform(X, y=None)
+       Add it to the appropriate registry.
+       Update the factory if necessary.
+       Add its parameters to YAML.
+       Test it independently.
+       Test it through the relevant PreprocessingPipeline.
+
+The key distinction:
+
+New Prep      → model-specific preprocessing composition
+New Component → reusable individual transformation
+
+
+#---------
+Qucik docs
+https://gemini.google.com/app/bc61ef70e7800251?hl=es

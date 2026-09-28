@@ -1,14 +1,12 @@
-from abc import ABC, abstractmethod
-
-
-from network_anomaly_detection.data.windowing import Windowing
-
-
 import joblib
+
+from abc import ABC, abstractmethod
+from network_anomaly_detection.data.windowing import Windowing
 
 
 
 class BasePrep(ABC):
+    """ constructs and orchestrates the preprocessing stages """
 
     def __init__(self, cfg):
         self.cfg = cfg
@@ -20,50 +18,34 @@ class BasePrep(ABC):
         pass
 
     @abstractmethod
-    def build_window_level_prep(self, cfg):
+    def build_temporal_prep(self, cfg):
         pass
 
     # actually is not per class; and win_size=1 equals no windowing
     def build_windowing(self, cfg):
-        return Windowing(2) # later from config
+        return Windowing(cfg.size, cfg.stride)
 
 
-    # is not exactly a pipeline
-    def build_pipeline(self):
+    def build_preprocessing_stages(self):
 
 
-
-        self.pointwise_prep = self.build_pointwise_prep(
-            self.cfg.get("prep", None)
-        )
-
-        self.windowing = self.build_windowing(
-            self.cfg.get("data", {}).get("windowing")
-        )
-
-        self.window_level_prep = self.build_window_level_prep(
-            self.cfg.get("prep", {}).get("window_level")
-        )
-
-
-        """ later this specific
         self.pointwise_prep = self.build_pointwise_prep(
             self.cfg.get("prep", {}).get("pointwise")
         )
 
         self.windowing = self.build_windowing(
-            self.cfg.get("data", {}).get("windowing")
+            self.cfg.get("prep", {}).get("windowing")
         )
 
-        self.window_level_prep = self.build_window_level_prep(
-            self.cfg.get("prep", {}).get("window_level")
+        self.temporal_prep = self.build_temporal_prep(
+            self.cfg.get("prep", {}).get("temporal_prep")
         )
-        """
+        
 
         return (
             self.pointwise_prep,
             self.windowing,
-            self.window_level_prep,
+            self.temporal_prep,
         )
 
 
@@ -75,14 +57,23 @@ class BasePrep(ABC):
         X_val,
         y_val,
     ):
-        pointwise_prep, windowing, window_level_prep = (
-            self.build_pipeline()
+        pointwise_prep, windowing, temporal_prep = (
+            self.build_preprocessing_stages()
         )
+
+
+
+        print(X_train.shape)
 
         # Pointwise
         if pointwise_prep:
             X_train = pointwise_prep.fit_transform(X_train)
             X_val = pointwise_prep.transform(X_val)
+
+
+        print(X_train.shape)
+
+
 
         # Windowing
         if windowing:
@@ -96,10 +87,13 @@ class BasePrep(ABC):
                 y_val,
             )
 
-        # Window-level
-        if window_level_prep:
-            X_train = window_level_prep.fit_transform(X_train)
-            X_val = window_level_prep.transform(X_val)
+
+        print(X_train.shape)
+
+        # temporal prep
+        if temporal_prep:
+            X_train = temporal_prep.fit_transform(X_train)
+            X_val = temporal_prep.transform(X_val)
 
 
         # adapt input here or in the model??????
@@ -112,7 +106,35 @@ class BasePrep(ABC):
         )
 
 
+    # for inference later
+    def transform(self, X):
+        if self.pointwise_prep:
+            X = self.pointwise_prep.transform(X)
 
+        if self.windowing:
+            X = self.windowing.transform(X)
+
+        if self.temporal_prep:
+            X = self.temporal_prep.transform(X)
+
+        return X
+
+
+    def transform_with_labels(self, X, y):
+        if self.pointwise_prep:
+            X = self.pointwise_prep.transform(X)
+
+        if self.windowing:
+            X, y = self.windowing.transform(X, y)
+
+        if self.temporal_prep:
+            X = self.temporal_prep.transform(X)
+
+        return X, y
+
+
+
+    #------SAVE AND LOAD PIPELINE---------#
     def save(self, path):
         joblib.dump(self, path)
 
@@ -122,64 +144,6 @@ class BasePrep(ABC):
 
 
 
-    #-------------------------------
-    def transform(
-        self,
-        X_train,
-        y_train,
-        X_val,
-        y_val,
-    ):
-        if self.pointwise_prep:
-            X_train = self.pointwise_prep.transform(X_train)
-            X_val = self.pointwise_prep.transform(X_val)
-
-        if self.windowing:
-            X_train, y_train = self.windowing.transform(
-                X_train,
-                y_train,
-            )
-
-            X_val, y_val = self.windowing.transform(
-                X_val,
-                y_val,
-            )
-
-        if self.window_level_prep:
-            X_train = self.window_level_prep.transform(X_train)
-            X_val = self.window_level_prep.transform(X_val)
-
-        return (
-            X_train,
-            y_train,
-            X_val,
-            y_val,
-        )
 
 
 
-
-
-
-    """
-    @abstractmethod
-    def build_pipeline(self):
-        raise NotImplementedError
-
-
-    def fit(self, X):
-        self.pipeline = self.build_pipeline()
-        self.pipeline.fit(X)
-
-        return self
-
-
-    def transform(self, X, y=None):
-        return self.pipeline.transform(X, y)
-
-
-    def get_artifacts(self):
-        return {
-            "pipeline": self.pipeline,
-        }
-    """
