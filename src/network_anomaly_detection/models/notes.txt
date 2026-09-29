@@ -1,0 +1,18 @@
+https://chatgpt.com/c/6abc31fd-4410-83e9-9262-20c3c19e4fa7
+
+
+
+              canonical X
+                   │
+                   ▼
+            adapt_input()
+                   │
+                   ▼
+             model-ready X
+                   │
+          ┌────────┴────────┐
+          ▼                 ▼
+       score()           predict()
+          │                 │
+          ▼                 ▼
+ anomaly score        native IF threshold
