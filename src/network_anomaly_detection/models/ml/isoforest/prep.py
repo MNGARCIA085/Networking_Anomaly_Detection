@@ -83,8 +83,3 @@ class IsoPrep(BasePrep):
         steps = []
 
         return PreprocessingPipeline(steps)
-    
-
-
-    def adapt_input(self, X):
-        return X.reshape(X.shape[0], -1)

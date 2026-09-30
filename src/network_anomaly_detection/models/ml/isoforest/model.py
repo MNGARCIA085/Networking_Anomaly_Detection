@@ -8,7 +8,7 @@ from network_anomaly_detection.models.ml.isoforest.schemas import IsoForestConfi
 
 class IsoForestModel(BaseModel):
 
-    def __init__(self, cfg: IsoForestConfig):
+    def __init__(self, cfg: IsoForestConfig, input_shape=None):
 
         self.config = cfg
 
@@ -38,6 +38,13 @@ class IsoForestModel(BaseModel):
         #  1 = inlier
         # -1 = outlier
         return (self.model.predict(X) == -1).astype(int)
+
+
+
+    # for the trainer; discuss real location later
+    def fit(self, X):
+        self.model.fit(X)
+        return self
 
 
 

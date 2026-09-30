@@ -6,7 +6,10 @@ from network_anomaly_detection.models.base_model import BaseModel
 from .schemas import AEConfig
 
 
-class AEModel(BaseModel):
+
+
+
+class AE(nn.Module):
 
     def __init__(self, cfg: AEConfig):
         super().__init__()
@@ -41,27 +44,54 @@ class AEModel(BaseModel):
 
         self.decoder = nn.Sequential(*decoder_layers)
 
-    def adapt_input(self, X):
-        return X.reshape(X.shape[0], -1)
-
     def forward(self, X):
         return self.decoder(
             self.encoder(X)
         )
 
+
+
+class AEModel(BaseModel):
+
+    def __init__(
+        self,
+        cfg: AEConfig,
+        input_shape,
+    ):
+        self.config = cfg
+
+        input_dim = int(np.prod(input_shape))
+
+        self.model = AE(
+            AEConfig(
+                input_dim=input_dim,
+                encoder_dims=cfg.encoder_dims,
+                decoder_dims=cfg.decoder_dims,
+            )
+        )
+
+
+
+    def adapt_input(self, X):
+        return X.reshape(X.shape[0], -1)
+
     def score(self, X):
 
-        self.eval()
+        self.model.eval()
 
         with torch.no_grad():
 
-            reconstruction = self(X)
+            X = torch.tensor(
+                X,
+                dtype=torch.float32,
+            )
+
+            reconstruction = self.model(X)
 
             return torch.mean(
                 (X - reconstruction) ** 2,
                 dim=1,
             ).cpu().numpy()
-
 
 
 

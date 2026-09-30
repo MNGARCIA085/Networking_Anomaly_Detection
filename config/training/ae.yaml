@@ -17,3 +17,6 @@ callbacks:
   - name: early_stopping
     params:
       patience: 5
+
+
+num_workers: 1

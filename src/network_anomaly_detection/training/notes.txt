@@ -1,0 +1,86 @@
+Prep produces the canonical representation; the model layer adapts its input shape; Trainer owns training; and tuning remains a separate first-class component.
+
+Training
+│
+├── NN training
+│   └── epoch-based + checkpoint callback
+│
+└── Classical training
+    └── fit + persist fitted artifact
+
+
+
+
+network_anomaly_detection/
+│
+├── training/
+│   ├── base_trainer.py
+│   ├── callbacks/
+│   │   ├── checkpoint.py
+│   │   ├── early_stopping.py
+│   │   └── ...
+│   ├── optimizers/
+│   │   └── ...
+│   └── ...
+│
+├── models/
+│   ├── ae/
+│   │   ├── model.py
+│   │   ├── trainer.py
+│   │   ├── prep.py
+│   │   └── tuning.py
+│   │
+│   ├── vae/
+│   │   ├── model.py
+│   │   ├── trainer.py
+│   │   ├── prep.py
+│   │   └── tuning.py
+│   │
+│   └── isoforest/
+│       ├── model.py
+│       ├── trainer.py
+│       ├── prep.py
+│       └── tuning.py
+
+
+training/ = reusable infrastructure
+
+BaseTrainer
+    ├── training loop
+    ├── validation
+    ├── optimizer creation
+    ├── scheduler
+    ├── callback handling
+    ├── checkpoint integration
+    └── logging hooks
+
+
+
+models/<model>/trainer.py = model-specific behavior
+
+This is also where I'd put differences such as:
+
+custom loss
+multiple model outputs
+special training steps
+unusual validation logic
+model-specific optimizer requirements
+special handling of latent variables
+
+
+----------------
+BaseTrainer
+    │
+    ├── IsoForestTrainer
+    │
+    └── NNTrainer
+          │
+          ├── AETrainer
+          ├── VAETrainer
+          └── TransformerAETrainer
+
+
+BaseTrainer: minimal common contract, mainly fit(...).
+NNTrainer: generic NN machinery — dataloaders, epochs, validation, optimizer, callbacks, etc.
+AETrainer: only AE-specific behavior/configuration.
+IsoForestTrainer: independent of NNTrainer, but still satisfies BaseTrainer.
