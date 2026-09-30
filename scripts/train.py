@@ -83,6 +83,16 @@ def main(cfg):
 		cfg=cfg.model_type.training)
 
 
+
+	"""
+	trainer = trainer_cls(
+    model=model,
+    cfg=cfg.model_type.training,
+    checkpoint_dir=checkpoint_dir,
+	)
+	"""
+
+
 	print(trainer)
 	print(X_train.shape)
 

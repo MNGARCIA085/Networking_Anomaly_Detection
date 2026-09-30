@@ -19,4 +19,13 @@ callbacks:
       patience: 5
 
 
+  - name: checkpoint
+    params:
+      #directory: checkpoints, for v0
+      every_n_epochs: 10
+      keep_last: 2
+      save_best: true
+      monitor: val_loss
+      mode: min
+
 num_workers: 1

@@ -5,12 +5,35 @@ from network_anomaly_detection.training.nn.schemas import TrainingConfig
 
 from network_anomaly_detection.training.nn.trainer import NNTrainer
 
+
+"""
+for ckpoint dir
+from pathlib import Path
+import mlflow
+
+
+run_dir = Path(
+    mlflow.get_artifact_uri()
+).parent
+
+checkpoint_dir = run_dir / "checkpoints"
+
+callbacks = create_callbacks(
+    cfg_training["callbacks"],
+    checkpoint_dir=checkpoint_dir,
+)
+"""
+
+
+
+
 class AETrainer(NNTrainer):
 
     def __init__(
         self,
         model, # model -> AEModel, model.model -> pytorch Model 
         cfg,
+        #checkpoint_dir=None,
     ):
         optimizer = create_optimizer(
             cfg["optimizer"],
@@ -24,6 +47,12 @@ class AETrainer(NNTrainer):
         callbacks = create_callbacks(
             cfg.get("callbacks", {}),
         )
+        # 
+        #  checkpoint_dir=checkpoint_dir,
+        # maybe add checkpoint dir!!!
+
+
+
 
         trainer_cfg = TrainingConfig(
             epochs=cfg["epochs"],

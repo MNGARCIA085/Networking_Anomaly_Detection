@@ -1,10 +1,11 @@
-from .implementations import PrintLossCallback, EarlyStopping
+from .implementations import PrintLossCallback, EarlyStopping, CheckpointCallback
 
 
 
 CALLBACK_REGISTRY = {
     "print_loss": PrintLossCallback,
     "early_stopping": EarlyStopping,
+    "checkpoint": CheckpointCallback,
 }
 
 
@@ -24,6 +25,8 @@ def create_callback(name, **params):
     return callback_cls(**params)
 
 
+
+# factory
 def create_callbacks(cfg):
     callbacks = [] # I can put defaults here if i want
             #EarlyStopping(patience=3),
@@ -38,3 +41,32 @@ def create_callbacks(cfg):
         )
 
     return callbacks
+
+
+"""
+def create_callbacks(cfg, checkpoint_dir=None):
+    callbacks = []
+
+    for callback_cfg in cfg:
+
+        name = callback_cfg["name"]
+        params = callback_cfg.get("params", {}).copy()
+
+        if name == "checkpoint":
+            if checkpoint_dir is None:
+                raise ValueError(
+                    "checkpoint_dir is required when using "
+                    "the checkpoint callback."
+                )
+
+            params["directory"] = checkpoint_dir
+
+        callbacks.append(
+            create_callback(
+                name,
+                **params,
+            )
+        )
+
+    return callbacks
+"""
