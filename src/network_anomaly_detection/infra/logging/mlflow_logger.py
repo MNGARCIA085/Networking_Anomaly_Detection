@@ -20,12 +20,12 @@ import matplotlib.pyplot as plt
 #from typing import Optional
 
 
-from anomaly_detection.infra.logging.utils import flatten_dict
+from network_anomaly_detection.infra.logging.utils import flatten_dict
 
 
 
-from anomaly_detection.infra.selection.candidate_registry import CandidateRegistry
-from anomaly_detection.infra.selection.candidate_manager import CandidateManager
+from network_anomaly_detection.infra.selection.candidate_registry import CandidateRegistry
+from network_anomaly_detection.infra.selection.candidate_manager import CandidateManager
 
 
 import shutil
@@ -59,33 +59,12 @@ class MLFlowLogger(ExperimentLogger):
         artifact_dir="mlruns"
     ):
 
-        """
-        self.root_dir = Path(__file__).resolve().parents[4]
-
-        self.tracking_db = (
-            self.root_dir / tracking_db
-        )
-
-        self.artifact_dir = (
-            self.root_dir / artifact_dir
-        )
-        """
-
-        #self.tracking_db = tracking_db
-        #self.artifact_dir = artifact_dir
 
         self.tracking_db = Path(tracking_db)
         self.artifact_dir = Path(artifact_dir)
-
         self.exp_name = exp_name
-
         self._init_mlflow()
 
-
-        # new!!
-        #self.candidate_registry = CandidateRegistry(
-        #    self.tracking_db
-        #)
         self.candidate_registry = CandidateRegistry(
             f"sqlite:///{self.tracking_db}"
         )
@@ -185,7 +164,7 @@ class MLFlowLogger(ExperimentLogger):
 
 
 
-    def artifact_path(self, filename):
+    def artifact_pathv0(self, filename):
 
         run_id = mlflow.active_run().info.run_id
 
@@ -343,6 +322,76 @@ class MLFlowLogger(ExperimentLogger):
                 shutil.rmtree(target)
             else:
                 target.unlink()
+
+
+
+
+    
+
+    #--------------------------------------------------------#
+    
+
+
+
+    def run_artifact_dir(self):
+        """Return the local artifact directory for the active MLflow run."""
+
+        run = mlflow.active_run()
+
+        if run is None:
+            raise RuntimeError(
+                "No active MLflow run."
+            )
+
+        run_id = run.info.run_id
+
+        path = (
+            self.artifact_dir
+            / str(run.info.experiment_id)
+            / run_id
+            / "artifacts"
+        )
+
+        path.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        return path
+
+
+    def artifact_path(
+        self,
+        filename,
+        artifact_dir=None,
+    ):
+        """Return a local path inside the active run's artifacts."""
+
+        base = (
+            artifact_dir
+            if artifact_dir is not None
+            else self.run_artifact_dir()
+        )
+
+        path = base / filename
+
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        return path
+
+
+
+    def checkpoint_dir(self):
+        return self.run_artifact_dir() / "checkpoints"
+
+
+
+    
+
+    #---------------------------------------------------------#            
     
 
     # log run
