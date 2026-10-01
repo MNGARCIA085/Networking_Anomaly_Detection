@@ -1,0 +1,23 @@
+start MLflow run
+      │
+      ├── status = running
+      │
+      ├── save config
+      ├── fit Prep
+      ├── save Prep artifact
+      ├── transform train/val
+      │
+      ├── build model
+      ├── build trainer
+      │
+      ├── train
+      │      └── checkpoints → run artifacts/checkpoints/
+      │
+      ├── save final artifacts / metrics
+      │
+      └── status = finished
+             OR
+          status = failed
+
+
+in a begining

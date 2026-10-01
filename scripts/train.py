@@ -80,7 +80,8 @@ def main(cfg):
 	trainer_cls = TRAINER_REGISTRY[cfg.model_type.name]
 	trainer = trainer_cls(
 		model=model,
-		cfg=cfg.model_type.training)
+		cfg=cfg.model_type.training,
+		checkpoint_dir='t/ch')
 
 
 

@@ -75,7 +75,6 @@ from pathlib import Path
 
 import torch
 
-from .base import Callback
 
 
 class CheckpointCallback(Callback):

@@ -33,7 +33,7 @@ class AETrainer(NNTrainer):
         self,
         model, # model -> AEModel, model.model -> pytorch Model 
         cfg,
-        #checkpoint_dir=None,
+        checkpoint_dir=None,
     ):
         optimizer = create_optimizer(
             cfg["optimizer"],
@@ -46,6 +46,7 @@ class AETrainer(NNTrainer):
 
         callbacks = create_callbacks(
             cfg.get("callbacks", {}),
+            checkpoint_dir=checkpoint_dir
         )
         # 
         #  checkpoint_dir=checkpoint_dir,

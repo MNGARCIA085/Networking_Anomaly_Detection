@@ -26,8 +26,41 @@ def create_callback(name, **params):
 
 
 
-# factory
-def create_callbacks(cfg):
+
+
+
+def create_callbacks(cfg, checkpoint_dir=None):
+    callbacks = []
+
+    for callback_cfg in cfg:
+
+        params = dict(
+            callback_cfg.get("params", {})
+        )
+
+        if callback_cfg["name"] == "checkpoint":
+
+            if checkpoint_dir is None:
+                raise ValueError(
+                    "checkpoint_dir is required for the checkpoint callback."
+                )
+
+            params["directory"] = checkpoint_dir
+
+        callbacks.append(
+            create_callback(
+                callback_cfg["name"],
+                **params,
+            )
+        )
+
+    return callbacks
+
+
+
+
+# factory; remove later
+def create_callbacksvo(cfg):
     callbacks = [] # I can put defaults here if i want
             #EarlyStopping(patience=3),
             #PrintLossCallback(),
@@ -43,8 +76,8 @@ def create_callbacks(cfg):
     return callbacks
 
 
-"""
-def create_callbacks(cfg, checkpoint_dir=None):
+
+def create_callbacksv1(cfg, checkpoint_dir=None):
     callbacks = []
 
     for callback_cfg in cfg:
@@ -69,4 +102,3 @@ def create_callbacks(cfg, checkpoint_dir=None):
         )
 
     return callbacks
-"""
