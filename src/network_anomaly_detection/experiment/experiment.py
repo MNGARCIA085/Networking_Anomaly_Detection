@@ -1,8 +1,39 @@
-class ExperimentPipeline:
 
-    def __init__(self, cfg, logger):
+from .pipeline import ExperimentPipeline
+
+#
+# diagram of lifecycle!!!
+
+
+class Experiment:
+
+    def __init__(
+        self,
+        cfg,
+        logger,
+    ):
         self.cfg = cfg
         self.logger = logger
+        self.run_id = None
+
+        self.pipeline = ExperimentPipeline(
+            cfg=cfg,
+            logger=logger,
+        )
+
+    def start(self, run_name=None):
+
+        run = self.logger.start_run(
+            run_name=run_name,
+        )
+
+        self.run_id = run.info.run_id
+
+        self.logger.log_tags({
+            "status": "running",
+        })
+
+        return run
 
     def run(
         self,
@@ -11,51 +42,46 @@ class ExperimentPipeline:
         y_train,
         X_val,
         y_val,
+        run_name=None,
     ):
-        # Prep is already supplied
-        X_train, y_train = prep.transform(
-            X_train,
-            y_train,
+
+        self.start(
+            run_name=run_name,
         )
 
-        X_val, y_val = prep.transform(
-            X_val,
-            y_val,
-        )
+        try:
 
-        self._save_prep(prep)
+            result = self.pipeline.run(
+                prep=prep,
+                X_train=X_train,
+                y_train=y_train,
+                X_val=X_val,
+                y_val=y_val,
+            )
 
-        model_cls = MODEL_REGISTRY[
-            self.cfg.model_type.name
-        ]
+            self.finish()
 
-        model = model_cls(
-            self.cfg.model_type.models,
-            input_shape=X_train.shape[1:],
-        )
+            return result
 
-        X_train = model.adapt_input(X_train)
-        X_val = model.adapt_input(X_val)
+        except Exception as error:
 
-        trainer_cls = TRAINER_REGISTRY[
-            self.cfg.model_type.name
-        ]
+            self.fail(error)
 
-        trainer = trainer_cls(
-            model=model,
-            cfg=self.cfg.model_type.training,
-            checkpoint_dir=self.logger.checkpoint_dir(),
-        )
+            raise
 
-        trainer.fit(
-            X_train,
-            y_train,
-            X_val,
-            y_val,
-        )
+    def finish(self):
 
-        return {
-            "prep": prep,
-            "model": model,
-            "trainer": trainer,
-        }
+        self.logger.log_tags({
+            "status": "finished",
+        })
+
+        self.logger.end_run()
+
+    def fail(self, error):
+
+        self.logger.log_tags({
+            "status": "failed",
+            "error": str(error),
+        })
+
+        self.logger.end_run()

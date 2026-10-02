@@ -1,0 +1,111 @@
+
+from network_anomaly_detection.models.registry import MODEL_REGISTRY
+from network_anomaly_detection.training.registry import TRAINER_REGISTRY
+
+
+
+
+class ExperimentPipeline:
+
+    def __init__(self, cfg, logger):
+        self.cfg = cfg
+        self.logger = logger
+
+    def run(
+        self,
+        prep,
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+    ):
+        # --------------------------------------------------
+        # Preprocessing
+        # --------------------------------------------------
+
+        # Prep is already fitted by the caller.
+        X_train, y_train = prep.transform_with_labels(
+            X_train,
+            y_train,
+        )
+
+        X_val, y_val = prep.transform_with_labels(
+            X_val,
+            y_val,
+        )
+
+        self._save_prep(prep)
+
+        # --------------------------------------------------
+        # Model
+        # --------------------------------------------------
+
+        model_cls = MODEL_REGISTRY[
+            self.cfg.model_type.name
+        ]
+
+        model = model_cls(
+            self.cfg.model_type.models,
+            input_shape=X_train.shape[1:],
+        )
+
+        # Model-specific input adaptation.
+        X_train = model.adapt_input(X_train)
+        X_val = model.adapt_input(X_val)
+
+        # --------------------------------------------------
+        # Trainer
+        # --------------------------------------------------
+
+        trainer_cls = TRAINER_REGISTRY[
+            self.cfg.model_type.name
+        ]
+
+        trainer = trainer_cls(
+            model=model,
+            cfg=self.cfg.model_type.training,
+            checkpoint_dir=self.logger.checkpoint_dir(),
+        )
+
+        # --------------------------------------------------
+        # Training
+        # --------------------------------------------------
+
+        trainer.fit(
+            X_train,
+            y_train,
+            X_val,
+            y_val,
+        )
+
+        # --------------------------------------------------
+        # Artifacts
+        # --------------------------------------------------
+
+        if trainer.history is not None:
+            self.logger.log_training_history(
+                trainer.history,
+            )
+
+        return {
+            "prep": prep,
+            "model": model,
+            "trainer": trainer,
+        }
+
+    def _save_prep(self, prep):
+
+        prep_path = self.logger.artifact_path(
+            "prep.joblib",
+            artifact_dir=(
+                self.logger.run_artifact_dir()
+                / "preprocessing"
+            ),
+        )
+
+        prep.save(prep_path)
+
+        self.logger.log_artifact(
+            prep_path,
+            artifact_path="preprocessing",
+        )
