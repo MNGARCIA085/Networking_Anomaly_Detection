@@ -35,6 +35,10 @@ class AETrainer(NNTrainer):
         cfg,
         checkpoint_dir=None,
     ):
+
+
+        print('sadsadssadsad', checkpoint_dir)
+
         optimizer = create_optimizer(
             cfg["optimizer"],
             model.model.parameters(),
@@ -51,8 +55,6 @@ class AETrainer(NNTrainer):
         # 
         #  checkpoint_dir=checkpoint_dir,
         # maybe add checkpoint dir!!!
-
-
 
 
         trainer_cfg = TrainingConfig(

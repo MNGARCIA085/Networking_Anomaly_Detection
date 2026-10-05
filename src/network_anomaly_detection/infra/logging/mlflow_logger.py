@@ -388,6 +388,88 @@ class MLFlowLogger(ExperimentLogger):
         return self.run_artifact_dir() / "checkpoints"
 
 
+    # real ones for checkpopints
+    def run_artifact_dir(self):
+        run = mlflow.active_run()
+
+        if run is None:
+            raise RuntimeError(
+                "No active MLflow run."
+            )
+
+        path = (
+            self.artifact_dir
+            / str(run.info.experiment_id)
+            / run.info.run_id
+            / "artifacts"
+        )
+
+        path.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        return path
+
+
+    def run_artifact_dir_by_id(self, run_id):
+
+        client = mlflow.tracking.MlflowClient()
+
+        run = client.get_run(run_id)
+
+        path = Path(
+            run.info.artifact_uri.replace(
+                "file://",
+                "",
+            )
+        )
+
+        return path
+
+
+
+    # little more ...
+    def get_run_artifact_path(self, run_id, artifact_path):
+        client = mlflow.tracking.MlflowClient()
+
+        run = client.get_run(run_id)
+
+        artifact_uri = run.info.artifact_uri
+
+        if artifact_uri.startswith("file://"):
+            artifact_uri = artifact_uri[7:]
+
+        return Path(artifact_uri) / artifact_path
+
+
+
+
+    def get_checkpoint_path(self, run_id, checkpoint=None):
+        checkpoint_dir = self.get_run_artifact_path(
+            run_id,
+            "checkpoints",
+        )
+
+        if checkpoint is None:
+            checkpoints = sorted(checkpoint_dir.glob("*.pt"))
+
+            if not checkpoints:
+                raise FileNotFoundError(
+                    f"No checkpoints found for run {run_id}."
+                )
+
+            return checkpoints[-1]
+
+        path = checkpoint_dir / checkpoint
+
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Checkpoint not found: {path}"
+            )
+
+        return path
+
 
     
 

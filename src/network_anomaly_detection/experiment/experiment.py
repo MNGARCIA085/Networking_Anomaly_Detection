@@ -5,6 +5,8 @@ from .pipeline import ExperimentPipeline
 # diagram of lifecycle!!!
 
 
+
+
 class Experiment:
 
     def __init__(
@@ -85,3 +87,38 @@ class Experiment:
         })
 
         self.logger.end_run()
+
+
+    # resume
+    def resume(
+        self,
+        run_id,
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+        checkpoint=None,
+        run_name=None,
+    ):
+        try:
+
+            result = self.pipeline.resume(
+                run_id=run_id,
+                X_train=X_train,
+                y_train=y_train,
+                X_val=X_val,
+                y_val=y_val,
+                checkpoint=checkpoint,
+                run_name=run_name,
+            )
+
+            return result
+
+        except Exception as error:
+
+            self.fail(error)
+
+            raise
+
+
+   

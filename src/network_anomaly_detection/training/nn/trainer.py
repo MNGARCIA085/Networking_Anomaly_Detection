@@ -114,6 +114,7 @@ class NNTrainer:
         y_train,
         X_val=None,
         y_val=None,
+        start_epoch=0, # to be resume-aware
     ):
         
 
@@ -144,7 +145,9 @@ class NNTrainer:
 
         self._call_callbacks("on_train_start", state)
 
-        for epoch in range(self.cfg.epochs):
+        for epoch in range(
+                start_epoch,
+                self.cfg.epochs):
             state.epoch = epoch
 
             self._call_callbacks("on_epoch_start", state)
