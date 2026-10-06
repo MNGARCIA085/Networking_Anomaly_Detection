@@ -21,11 +21,45 @@ class ExperimentPipeline:
     def run(
         self,
         prep,
+        evaluator,
         X_train,
         y_train,
         X_val,
         y_val,
     ):
+
+
+        #print(self.cfg)
+
+        # MOST important params
+        self.logger.log_params({
+            "model": self.cfg.model_type.name,
+            "random_state": self.cfg.random_state,
+            "window_size": self.cfg.model_type.prep.windowing.size,
+            "window_stride": self.cfg.model_type.prep.windowing.stride,
+            "optimizer": self.cfg.model_type.training.optimizer.name,
+            "learning_rate": self.cfg.model_type.training.optimizer.params.lr,
+            "epochs": self.cfg.model_type.training.epochs,
+            "batch_size": self.cfg.model_type.training.batch_size,
+        })
+
+
+        # later save all confis as artiufac
+        
+        """
+        from omegaconf import OmegaConf
+        self.logger.log_text(
+            OmegaConf.to_yaml(
+                self.cfg,
+                resolve=True,
+            ),
+            "config.yaml",
+        )
+        """
+
+
+
+
         # --------------------------------------------------
         # Preprocessing
         # --------------------------------------------------
@@ -85,6 +119,33 @@ class ExperimentPipeline:
             y_val,
         )
 
+
+        # --------------------------------------------------
+        # Evaluation
+        # --------------------------------------------------
+
+        scores = model.score(X_val)
+
+        predictions = model.predict(
+            X_val,
+            threshold=0.7, # calcuaetd later
+            #threshold=self.cfg.model_type.threshold,
+        )
+
+        metrics = evaluator.evaluate(
+            scores=scores,
+            y_true=y_val,
+            predictions=predictions,
+        )
+
+
+       
+
+
+        self.logger.log_metrics(metrics)
+
+
+
         # --------------------------------------------------
         # Artifacts
         # --------------------------------------------------
@@ -98,6 +159,7 @@ class ExperimentPipeline:
             "prep": prep,
             "model": model,
             "trainer": trainer,
+            "metrics": metrics
         }
 
 
@@ -234,6 +296,31 @@ class ExperimentPipeline:
             # Training history
             # --------------------------------------------------
 
+
+            # --------------------------------------------------
+            # Evaluation (check)
+            # --------------------------------------------------
+
+            scores = model.score(X_val)
+
+            predictions = model.predict(
+                X_val,
+                threshold=0.7, # calcuaetd later
+                #threshold=self.cfg.model_type.threshold,
+            )
+
+            metrics = evaluator.evaluate(
+                scores=scores,
+                y_true=y_val,
+                predictions=predictions,
+            )
+
+
+            self.logger.log_metrics(metrics)
+
+
+
+            #.....
             if trainer.history is not None:
                 self.logger.log_training_history(
                     trainer.history,

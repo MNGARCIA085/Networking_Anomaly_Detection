@@ -56,8 +56,14 @@ def main(cfg: DictConfig):
         logger=logger,
     )
 
+
+    from network_anomaly_detection.evaluation.evaluator import Evaluator
+
+    evaluator = Evaluator()
+
     result = experiment.run(
         prep=prep,
+        evaluator=evaluator,
         X_train=X_train,
         y_train=y_train,
         X_val=X_val,
