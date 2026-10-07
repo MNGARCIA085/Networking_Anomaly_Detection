@@ -21,3 +21,8 @@ start MLflow run
 
 
 in a begining
+
+
+
+----
+there is no architectural reason to inject a pre-fitted threshold into Experiment.

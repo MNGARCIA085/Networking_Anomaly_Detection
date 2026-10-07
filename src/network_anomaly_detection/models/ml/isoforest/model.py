@@ -32,7 +32,7 @@ class IsoForestModel(BaseModel):
         # project convention: higher = more anomalous
         return -self.model.decision_function(X)
 
-    def predict(self, X):
+    def predict(self, X, threshold=None):
 
         # sklearn:
         #  1 = inlier

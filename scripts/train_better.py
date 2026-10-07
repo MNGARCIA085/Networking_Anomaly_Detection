@@ -20,10 +20,22 @@ def main(cfg: DictConfig):
     # Data
     # --------------------------------------------------
 
+
+    """
     data = DataModule(
         "data/arriba.csv",
         "data/arriba.csv",
     )
+    """
+    
+
+    
+    data = DataModule(
+        "data/data.csv",
+        "data/data.csv",
+    )
+    
+
 
     X_train, y_train, X_val, y_val = data.load()
 
@@ -62,7 +74,7 @@ def main(cfg: DictConfig):
     evaluator = Evaluator()
 
     result = experiment.run(
-        prep=prep,
+        prep=prep, # already fit
         evaluator=evaluator,
         X_train=X_train,
         y_train=y_train,

@@ -9,6 +9,8 @@ import torch
 
 
 
+from network_anomaly_detection.thresholding.thresholding import Thresholding
+
 
 
 
@@ -37,10 +39,10 @@ class ExperimentPipeline:
             "random_state": self.cfg.random_state,
             "window_size": self.cfg.model_type.prep.windowing.size,
             "window_stride": self.cfg.model_type.prep.windowing.stride,
-            "optimizer": self.cfg.model_type.training.optimizer.name,
-            "learning_rate": self.cfg.model_type.training.optimizer.params.lr,
-            "epochs": self.cfg.model_type.training.epochs,
-            "batch_size": self.cfg.model_type.training.batch_size,
+            #"optimizer": self.cfg.model_type.training.optimizer.name,
+            #"learning_rate": self.cfg.model_type.training.optimizer.params.lr,
+            #"epochs": self.cfg.model_type.training.epochs,
+            #"batch_size": self.cfg.model_type.training.batch_size,
         })
 
 
@@ -120,23 +122,75 @@ class ExperimentPipeline:
         )
 
 
+
+
         # --------------------------------------------------
         # Evaluation
         # --------------------------------------------------
 
-        scores = model.score(X_val)
+        val_scores = model.score(X_val)
+
+
+        """
+        thresholding.fit(
+            scores=val_scores,
+            y_true=y_val,
+        )
+
+        threshold = thresholding.get_threshold() # None for iso
+
+        print(threshold)
+
 
         predictions = model.predict(
             X_val,
-            threshold=0.7, # calcuaetd later
-            #threshold=self.cfg.model_type.threshold,
+            threshold=threshold,
+        )
+        """
+
+
+        val_scores = model.score(X_val)
+
+
+
+        
+        thresholding_cfg = self.cfg.get("thresholding")
+
+        if thresholding_cfg:
+            thresholding = Thresholding(thresholding_cfg)
+
+            thresholding.fit(
+                scores=val_scores,
+                y_val=y_val, # y_true=y_val later
+            )
+
+            threshold = thresholding.get_threshold()
+        else:
+            thresholding = None
+            threshold = None
+
+        print(threshold)
+        
+
+
+        # later -> save theshold as an artifact
+
+
+        predictions = model.predict(
+            X_val,
+            threshold=threshold,
         )
 
+
+
         metrics = evaluator.evaluate(
-            scores=scores,
+            scores=val_scores,
             y_true=y_val,
             predictions=predictions,
         )
+
+
+        print(metrics)
 
 
        

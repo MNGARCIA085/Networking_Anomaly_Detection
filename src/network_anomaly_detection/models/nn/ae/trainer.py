@@ -36,9 +36,6 @@ class AETrainer(NNTrainer):
         checkpoint_dir=None,
     ):
 
-
-        print('sadsadssadsad', checkpoint_dir)
-
         optimizer = create_optimizer(
             cfg["optimizer"],
             model.model.parameters(),

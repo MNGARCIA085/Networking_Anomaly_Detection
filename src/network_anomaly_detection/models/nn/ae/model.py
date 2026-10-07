@@ -71,9 +71,9 @@ class AEModel(BaseModel):
         )
 
 
-
     def adapt_input(self, X):
         return X.reshape(X.shape[0], -1)
+
 
     def score(self, X):
 
@@ -92,6 +92,14 @@ class AEModel(BaseModel):
                 (X - reconstruction) ** 2,
                 dim=1,
             ).cpu().numpy()
+
+
+    # predict
+    def predict(self, X, threshold):
+        scores = self.score(X)
+        return (scores >= threshold).astype(int)
+
+
 
 
 
