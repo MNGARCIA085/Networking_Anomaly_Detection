@@ -153,8 +153,8 @@ class ExperimentPipeline:
 
 
 
-        
-        thresholding_cfg = self.cfg.get("thresholding")
+        thresholding_cfg = self.cfg.model_type.get("thresholding")
+        print(thresholding_cfg)
 
         if thresholding_cfg:
             thresholding = Thresholding(thresholding_cfg)

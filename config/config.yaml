@@ -2,11 +2,6 @@
 defaults:
   - _self_
   - model_type: ae
-  - data: data
-  - models: ae
-  - training: ae
-  - tuning: ae
-  - thresholding: ae
   - override hydra/launcher: joblib
 
 random_state: 42

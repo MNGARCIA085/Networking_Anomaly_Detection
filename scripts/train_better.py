@@ -63,6 +63,9 @@ def main(cfg: DictConfig):
 
     logger = MLFlowLogger()
 
+
+
+
     experiment = Experiment(
         cfg=cfg,
         logger=logger,
