@@ -130,31 +130,7 @@ class ExperimentPipeline:
 
         val_scores = model.score(X_val)
 
-
-        """
-        thresholding.fit(
-            scores=val_scores,
-            y_true=y_val,
-        )
-
-        threshold = thresholding.get_threshold() # None for iso
-
-        print(threshold)
-
-
-        predictions = model.predict(
-            X_val,
-            threshold=threshold,
-        )
-        """
-
-
-        val_scores = model.score(X_val)
-
-
-
         thresholding_cfg = self.cfg.model_type.get("thresholding")
-        print(thresholding_cfg)
 
         if thresholding_cfg:
             thresholding = Thresholding(thresholding_cfg)
@@ -169,7 +145,6 @@ class ExperimentPipeline:
             thresholding = None
             threshold = None
 
-        print(threshold)
         
 
 
@@ -188,16 +163,9 @@ class ExperimentPipeline:
             y_true=y_val,
             predictions=predictions,
         )
-
-
-        print(metrics)
-
-
        
 
-
         self.logger.log_metrics(metrics)
-
 
 
         # --------------------------------------------------
@@ -208,6 +176,9 @@ class ExperimentPipeline:
             self.logger.log_training_history(
                 trainer.history,
             )
+
+
+        print(metrics)
 
         return {
             "prep": prep,

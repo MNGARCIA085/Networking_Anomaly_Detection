@@ -65,6 +65,8 @@ def main(cfg: DictConfig):
 
 
 
+    print(cfg)
+
 
     experiment = Experiment(
         cfg=cfg,

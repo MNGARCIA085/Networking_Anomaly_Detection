@@ -1,5 +1,17 @@
 
 
+
+random_state: 42
+
+
+metric: pr_auc
+direction: maximize
+n_trials: 2
+n_jobs: 2
+
+
+
+
 data:
   windowing:
     size:
@@ -101,8 +113,8 @@ training_space:
   epochs:
     name: epochs
     type: int
-    low: 5
-    high: 20
+    low: 2
+    high: 8
 
   batch_size:
     name: batch_size
