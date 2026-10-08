@@ -6,7 +6,49 @@ from network_anomaly_detection.models.base_model import BaseModel
 from network_anomaly_detection.models.ml.isoforest.schemas import IsoForestConfig
 
 
+
+
+
+
 class IsoForestModel(BaseModel):
+
+    def __init__(self, cfg: dict, input_shape=None):
+        self.config = cfg
+
+        self.model = IsolationForest(
+            n_estimators=cfg["n_estimators"],
+            contamination=cfg["contamination"],
+            max_samples=cfg["max_samples"],
+            max_features=cfg["max_features"],
+            bootstrap=cfg["bootstrap"],
+            random_state=cfg["random_state"],
+        )
+
+    def adapt_input(self, X):
+        # (N, W, F) -> (N, W * F)
+        return X.reshape(X.shape[0], -1)
+
+    def score(self, X):
+        # sklearn: higher = more normal
+        # project convention: higher = more anomalous
+        return -self.model.decision_function(X)
+
+    def predict(self, X, threshold=None):
+        if threshold is not None:
+            return (self.score(X) >= threshold).astype(int)
+
+        # sklearn: 1 = inlier, -1 = outlier
+        return (self.model.predict(X) == -1).astype(int)
+
+    def fit(self, X):
+        self.model.fit(X)
+        return self
+
+
+
+
+
+class IsoForestModelv0(BaseModel):
 
     def __init__(self, cfg: IsoForestConfig, input_shape=None):
 

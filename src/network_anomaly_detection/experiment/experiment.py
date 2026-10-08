@@ -95,6 +95,7 @@ class Experiment:
     def resume(
         self,
         run_id,
+        evaluator,
         X_train,
         y_train,
         X_val,
@@ -106,6 +107,7 @@ class Experiment:
 
             result = self.pipeline.resume(
                 run_id=run_id,
+                evaluator=evaluator,
                 X_train=X_train,
                 y_train=y_train,
                 X_val=X_val,

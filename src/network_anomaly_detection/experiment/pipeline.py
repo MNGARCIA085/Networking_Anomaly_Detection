@@ -1,23 +1,19 @@
+from copy import deepcopy
+
+import mlflow
+import torch
+import yaml
 
 from network_anomaly_detection.models.registry import MODEL_REGISTRY
 from network_anomaly_detection.training.registry import TRAINER_REGISTRY
 from network_anomaly_detection.preprocessing.base import BasePrep
-from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
-
-import mlflow
-import torch
-
-
-
 from network_anomaly_detection.thresholding.thresholding import Thresholding
-
-
 
 
 class ExperimentPipeline:
 
     def __init__(self, cfg, logger):
-        self.cfg = cfg
+        self.cfg = deepcopy(cfg)
         self.logger = logger
 
     def run(
@@ -30,51 +26,35 @@ class ExperimentPipeline:
         y_val,
     ):
 
+        cfg = self.cfg
+        model_cfg = cfg["model_type"]
 
-        #print(self.cfg)
+        # --------------------------------------------------
+        # Configuration and logging
+        # --------------------------------------------------
 
-        # MOST important params
         self.logger.log_params({
-            "model": self.cfg.model_type.name,
-            "random_state": self.cfg.random_state,
-            "window_size": self.cfg.model_type.prep.windowing.size,
-            "window_stride": self.cfg.model_type.prep.windowing.stride,
-            #"optimizer": self.cfg.model_type.training.optimizer.name,
-            #"learning_rate": self.cfg.model_type.training.optimizer.params.lr,
-            #"epochs": self.cfg.model_type.training.epochs,
-            #"batch_size": self.cfg.model_type.training.batch_size,
+            "model": model_cfg["name"],
+            "random_state": cfg["random_state"],
+            "window_size": model_cfg["data"]["windowing"]["size"],
+            "window_stride": model_cfg["data"]["windowing"]["stride"],
         })
 
-
-        # later save all confis as artiufac
-        
-        """
-        from omegaconf import OmegaConf
-        self.logger.log_text(
-            OmegaConf.to_yaml(
-                self.cfg,
-                resolve=True,
-            ),
-            "config.yaml",
-        )
-        """
-
-
-
+        #self.logger.log_text(
+        #    yaml.safe_dump(cfg, sort_keys=False),
+        #    "config.yaml",
+        #)
 
         # --------------------------------------------------
         # Preprocessing
         # --------------------------------------------------
 
-        # Prep is already fitted by the caller.
         X_train, y_train = prep.transform_with_labels(
-            X_train,
-            y_train,
+            X_train, y_train
         )
 
         X_val, y_val = prep.transform_with_labels(
-            X_val,
-            y_val,
+            X_val, y_val
         )
 
         self._save_prep(prep)
@@ -83,16 +63,13 @@ class ExperimentPipeline:
         # Model
         # --------------------------------------------------
 
-        model_cls = MODEL_REGISTRY[
-            self.cfg.model_type.name
-        ]
+        model_cls = MODEL_REGISTRY[model_cfg["name"]]
 
         model = model_cls(
-            self.cfg.model_type.models,
+            model_cfg["models"],
             input_shape=X_train.shape[1:],
         )
 
-        # Model-specific input adaptation.
         X_train = model.adapt_input(X_train)
         X_val = model.adapt_input(X_val)
 
@@ -100,13 +77,11 @@ class ExperimentPipeline:
         # Trainer
         # --------------------------------------------------
 
-        trainer_cls = TRAINER_REGISTRY[
-            self.cfg.model_type.name
-        ]
+        trainer_cls = TRAINER_REGISTRY[model_cfg["name"]]
 
         trainer = trainer_cls(
             model=model,
-            cfg=self.cfg.model_type.training,
+            cfg=model_cfg["training"],
             checkpoint_dir=self.logger.checkpoint_dir(),
         )
 
@@ -121,23 +96,21 @@ class ExperimentPipeline:
             y_val,
         )
 
-
-
-
         # --------------------------------------------------
         # Evaluation
         # --------------------------------------------------
 
         val_scores = model.score(X_val)
 
-        thresholding_cfg = self.cfg.model_type.get("thresholding")
+
+        thresholding_cfg = cfg["model_type"].get("thresholding")
 
         if thresholding_cfg:
             thresholding = Thresholding(thresholding_cfg)
 
             thresholding.fit(
                 scores=val_scores,
-                y_val=y_val, # y_true=y_val later
+                y_val=y_val,
             )
 
             threshold = thresholding.get_threshold()
@@ -145,38 +118,25 @@ class ExperimentPipeline:
             thresholding = None
             threshold = None
 
-        
-
-
-        # later -> save theshold as an artifact
-
-
         predictions = model.predict(
             X_val,
             threshold=threshold,
         )
-
-
 
         metrics = evaluator.evaluate(
             scores=val_scores,
             y_true=y_val,
             predictions=predictions,
         )
-       
 
         self.logger.log_metrics(metrics)
-
 
         # --------------------------------------------------
         # Artifacts
         # --------------------------------------------------
 
         if trainer.history is not None:
-            self.logger.log_training_history(
-                trainer.history,
-            )
-
+            self.logger.log_training_history(trainer.history)
 
         print(metrics)
 
@@ -184,15 +144,20 @@ class ExperimentPipeline:
             "prep": prep,
             "model": model,
             "trainer": trainer,
-            "metrics": metrics
+            "thresholding": thresholding,
+            "threshold": threshold,
+            "metrics": metrics,
+            "config": deepcopy(cfg),
         }
 
+    # ------------------------------------------------------
+    # Resume training
+    # ------------------------------------------------------
 
-
-    #-------------------------resume training-------------------#
     def resume(
         self,
         run_id,
+        evaluator,
         X_train,
         y_train,
         X_val,
@@ -200,6 +165,10 @@ class ExperimentPipeline:
         checkpoint=None,
         run_name=None,
     ):
+
+        cfg = self.cfg
+        model_cfg = cfg["model_type"]
+
         # --------------------------------------------------
         # Load preprocessing
         # --------------------------------------------------
@@ -228,7 +197,7 @@ class ExperimentPipeline:
         start_epoch = state["epoch"] + 1
 
         # --------------------------------------------------
-        # New MLflow run
+        # Create linked MLflow run
         # --------------------------------------------------
 
         run = self.logger.start_run(
@@ -249,53 +218,47 @@ class ExperimentPipeline:
         })
 
         try:
-            # --------------------------------------------------
-            # Transform data
-            # --------------------------------------------------
+            # ----------------------------------------------
+            # Preprocessing
+            # ----------------------------------------------
 
             X_train, y_train = prep.transform_with_labels(
-                X_train,
-                y_train,
+                X_train, y_train
             )
 
             X_val, y_val = prep.transform_with_labels(
-                X_val,
-                y_val,
+                X_val, y_val
             )
 
-            # --------------------------------------------------
+            # ----------------------------------------------
             # Model
-            # --------------------------------------------------
+            # ----------------------------------------------
 
-            model_cls = MODEL_REGISTRY[
-                self.cfg.model_type.name
-            ]
+            model_cls = MODEL_REGISTRY[model_cfg["name"]]
 
             model = model_cls(
-                self.cfg.model_type.models,
+                model_cfg["models"],
                 input_shape=X_train.shape[1:],
             )
 
             X_train = model.adapt_input(X_train)
             X_val = model.adapt_input(X_val)
 
-            # --------------------------------------------------
+            # ----------------------------------------------
             # Trainer
-            # --------------------------------------------------
+            # ----------------------------------------------
 
-            trainer_cls = TRAINER_REGISTRY[
-                self.cfg.model_type.name
-            ]
+            trainer_cls = TRAINER_REGISTRY[model_cfg["name"]]
 
             trainer = trainer_cls(
                 model=model,
-                cfg=self.cfg.model_type.training,
+                cfg=model_cfg["training"],
                 checkpoint_dir=self.logger.checkpoint_dir(),
             )
 
-            # --------------------------------------------------
+            # ----------------------------------------------
             # Restore state
-            # --------------------------------------------------
+            # ----------------------------------------------
 
             model.model.load_state_dict(
                 state["model_state_dict"]
@@ -305,9 +268,9 @@ class ExperimentPipeline:
                 state["optimizer_state_dict"]
             )
 
-            # --------------------------------------------------
+            # ----------------------------------------------
             # Continue training
-            # --------------------------------------------------
+            # ----------------------------------------------
 
             trainer.fit(
                 X_train,
@@ -317,21 +280,36 @@ class ExperimentPipeline:
                 start_epoch=start_epoch,
             )
 
-            # --------------------------------------------------
-            # Training history
-            # --------------------------------------------------
+            # ----------------------------------------------
+            # Evaluation
+            # ----------------------------------------------
 
 
-            # --------------------------------------------------
-            # Evaluation (check)
-            # --------------------------------------------------
+            
 
             scores = model.score(X_val)
 
+            
+            thresholding_cfg = cfg["model_type"].get("thresholding")
+
+            
+
+            if thresholding_cfg:
+                thresholding = Thresholding(thresholding_cfg)
+                thresholding.fit(scores=scores, y_val=y_val)
+                threshold = thresholding.get_threshold()
+            else:
+                thresholding = None
+                threshold = None
+
+
+            print(threshold)
+
+
+
             predictions = model.predict(
                 X_val,
-                threshold=0.7, # calcuaetd later
-                #threshold=self.cfg.model_type.threshold,
+                threshold=threshold,
             )
 
             metrics = evaluator.evaluate(
@@ -340,21 +318,24 @@ class ExperimentPipeline:
                 predictions=predictions,
             )
 
-
             self.logger.log_metrics(metrics)
 
+            #self.logger.log_text(
+            #    yaml.safe_dump(cfg, sort_keys=False),
+            #    "config.yaml",
+            #)
 
-
-            #.....
             if trainer.history is not None:
-                self.logger.log_training_history(
-                    trainer.history,
-                )
+                self.logger.log_training_history(trainer.history)
 
             return {
                 "prep": prep,
                 "model": model,
                 "trainer": trainer,
+                "thresholding": thresholding,
+                "threshold": threshold,
+                "metrics": metrics,
+                "config": deepcopy(cfg),
             }
 
         except Exception as error:
@@ -364,19 +345,16 @@ class ExperimentPipeline:
             })
             raise
 
+    # ------------------------------------------------------
+    # Save preprocessing
+    # ------------------------------------------------------
 
-
-
-
-    #.....................
-    # dont hink it belomgs here!!!!!: move to prep probably
     def _save_prep(self, prep):
 
         prep_path = self.logger.artifact_path(
             "prep.joblib",
             artifact_dir=(
-                self.logger.run_artifact_dir()
-                / "preprocessing"
+                self.logger.run_artifact_dir() / "preprocessing"
             ),
         )
 
@@ -386,37 +364,3 @@ class ExperimentPipeline:
             prep_path,
             artifact_path="preprocessing",
         )
-
-
-
-
-
-
-
-
-"""
-Because run() means:
-
-create a new experiment execution from the supplied prep/data.
-
-Whereas resume() means:
-
-recover an existing execution from a checkpoint and create a new linked MLflow run.
-
-Those are genuinely different workflows.
-
-class Experiment:
-
-    def run(...):
-        # normal training
-        # creates new MLflow run
-
-    def resume(...):
-        # loads original run metadata
-        # loads prep/checkpoint
-        # creates NEW MLflow run
-        # links it with parent_run_id
-        # restores model + optimizer
-        # continues training
-
-"""

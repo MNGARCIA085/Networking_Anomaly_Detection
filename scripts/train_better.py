@@ -65,7 +65,10 @@ def main(cfg: DictConfig):
 
 
 
-    print(cfg)
+    print(type(cfg))
+    from omegaconf import OmegaConf
+
+    cfg = OmegaConf.to_container(cfg, resolve=True)
 
 
     experiment = Experiment(
@@ -85,7 +88,8 @@ def main(cfg: DictConfig):
         y_train=y_train,
         X_val=X_val,
         y_val=y_val,
-        run_name=f"{cfg.model_type.name}_baseline",
+        run_name='train',
+        #run_name=f"{cfg.model_type.name}_baseline",
     )
 
     return result

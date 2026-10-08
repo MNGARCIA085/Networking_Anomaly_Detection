@@ -50,7 +50,7 @@ class AE(nn.Module):
         )
 
 
-
+"""
 class AEModel(BaseModel):
 
     def __init__(
@@ -67,6 +67,23 @@ class AEModel(BaseModel):
                 input_dim=input_dim,
                 encoder_dims=cfg.encoder_dims,
                 decoder_dims=cfg.decoder_dims,
+            )
+        )
+"""
+
+
+class AEModel(BaseModel):
+
+    def __init__(self, cfg: dict, input_shape):
+        self.config = cfg
+
+        input_dim = int(np.prod(input_shape))
+
+        self.model = AE(
+            AEConfig(
+                input_dim=input_dim,
+                encoder_dims=cfg["encoder_dims"],
+                decoder_dims=cfg["decoder_dims"],
             )
         )
 

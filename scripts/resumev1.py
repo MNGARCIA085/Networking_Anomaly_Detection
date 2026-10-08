@@ -27,7 +27,8 @@ def main(cfg):
 
     parser.add_argument(
         "--run-id",
-        default="291831267ea24f1da923c0cd0466f138",
+        default="cb96d7f12a3648638932c3a0f76d71ce",
+        #default="291831267ea24f1da923c0cd0466f138",
         #default="d18e0d3181074088a1a69c426eb2a697",
         #required=True,
     )
@@ -61,12 +62,24 @@ def main(cfg):
     # Data
     # --------------------------------------------------
 
+
+    """
     data = DataModule(
         "data/arriba.csv",
         "data/arriba.csv",
     )
+    """
+
+    data = DataModule(
+        "data/data.csv",
+        "data/data.csv",
+    )
 
     X_train, y_train, X_val, y_val = data.load()
+
+
+
+    print(y_val)
 
 
 
@@ -78,8 +91,14 @@ def main(cfg):
         logger=logger,
     )
 
+
+    from network_anomaly_detection.evaluation.evaluator import Evaluator
+
+    evaluator = Evaluator()
+
     result = experiment.resume(
         run_id,
+        evaluator,
         X_train,
         y_train,
         X_val,
