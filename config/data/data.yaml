@@ -8,5 +8,5 @@ y_test_path: data/arriba.csv
 
 windowing:
   enabled: true
-  size: 10
+  size: 1
   stride: 1

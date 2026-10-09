@@ -3,7 +3,7 @@
 pointwise:
   
   imputation:
-    enabled: true
+    enabled: false
     name: simple
     params:
       strategy: median
@@ -16,7 +16,7 @@ pointwise:
       with_std: true
 
   transform:
-    enabled: true
+    enabled: false
     name: power
     params:
       method: yeo-johnson

@@ -41,6 +41,11 @@ class AETrainer(NNTrainer):
             model.model.parameters(),
         )
 
+        # check
+        print("Optimizer:", optimizer.__class__.__name__)
+        print("Optimizer config:", optimizer.defaults)
+        #
+
         loss = create_loss(
             cfg["loss"],
         )

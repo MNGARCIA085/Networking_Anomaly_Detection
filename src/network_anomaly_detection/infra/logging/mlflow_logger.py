@@ -31,6 +31,9 @@ from network_anomaly_detection.infra.selection.candidate_manager import Candidat
 import shutil
 
 
+import json
+
+
 """
 rm -rf mlruns/
 rm -rf mlartifacts/      
@@ -523,6 +526,37 @@ class MLFlowLogger(ExperimentLogger):
         )
 
         return True
+
+
+
+
+    #-------------------------------------------------------#
+    def log_diagnostics(self, diagnostics):
+        # Scalar diagnostics -> MLflow metrics
+        metrics = {}
+
+        def collect_scalars(data, prefix=""):
+            for key, value in data.items():
+                name = f"{prefix}{key}"
+
+                if isinstance(value, dict):
+                    collect_scalars(value, prefix=f"{name}_")
+                elif isinstance(value, (int, float, np.number)):
+                    if np.isfinite(value):
+                        metrics[name] = float(value)
+
+        collect_scalars(diagnostics)
+
+        if metrics:
+            self.log_metrics(metrics)
+
+        # Full diagnostics -> JSON artifact
+        path = self.artifact_path("diagnostics/diagnostics.json")
+
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(diagnostics, f, indent=2, allow_nan=False)
+
+        return path
 
 
     

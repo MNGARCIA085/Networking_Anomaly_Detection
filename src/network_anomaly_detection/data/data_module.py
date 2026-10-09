@@ -46,8 +46,11 @@ class DataModule:
         df = (
             df.replace([np.inf, -np.inf], np.nan)
               .dropna()
-              .head(7000)
+              #.head(7000)
         )
+
+
+        #print(df.keys())
 
         df.columns = df.columns.str.strip()
 

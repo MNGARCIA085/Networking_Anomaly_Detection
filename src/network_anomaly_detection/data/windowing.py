@@ -73,51 +73,6 @@ class Windowing:
         return X_windows, np.asarray(y_windows)
 
 
-    """
-    def transformv0(self, X, y):
-        X = np.asarray(X)
-        y = np.asarray(y)
-
-        if X.ndim != 2:
-            raise ValueError(
-                f"Expected X with shape "
-                f"(n_samples, n_features), got {X.shape}"
-            )
-
-        
-        if y.ndim != 1:
-            raise ValueError(
-                f"Expected y with shape (n_samples,), got {y.shape}"
-            )
-
-
-        if len(X) != len(y):
-            raise ValueError(
-                "X and y must have the same number of samples"
-            )
-
-
-        starts = self._get_starts(len(X))
-
-        X_windows = []
-        y_windows = []
-
-        for i in starts:
-            X_windows.append(
-                X[i:i + self.seq_len]
-            )
-
-            # Window is anomalous if any point is anomalous
-            y_windows.append(
-                int(np.any(y[i:i + self.seq_len] == 1))
-            )
-
-        return (
-            np.stack(X_windows),
-            np.asarray(y_windows),
-        )
-    """
-
     def save(self, path):
         joblib.dump(self, path)
 

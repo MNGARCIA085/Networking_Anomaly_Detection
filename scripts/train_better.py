@@ -30,10 +30,16 @@ def main(cfg: DictConfig):
     """
     
 
-    
+    """
     data = DataModule(
         "data/data.csv",
         "data/data.csv",
+    )
+    """
+
+    data = DataModule(
+        "data/X_train.csv",
+        "data/X_test.csv",
     )
     
 
@@ -48,8 +54,8 @@ def main(cfg: DictConfig):
     X_train = X_train.loc[mask]
     y_train = y_train.loc[mask]
 
-    print("Train labels:", y_train.value_counts().to_dict())
-    print("Validation labels:", y_val.value_counts().to_dict())
+    #print("Train labels:", y_train.value_counts().to_dict())
+    #print("Validation labels:", y_val.value_counts().to_dict())
 
 
 
