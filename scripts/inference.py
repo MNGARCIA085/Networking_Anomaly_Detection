@@ -63,6 +63,31 @@ def main():
     print(predictions)
 
 
+
+    # more realistic preds
+    pred = runner.predict(X_val)
+    print(pred)
+
+
+
+    # checks
+    scores_direct = model.score(model.adapt_input(prep.transform(X_val)))
+    scores_runner = runner.score(X_val)
+
+
+
+    #
+    
+
+    print("Direct:", scores_direct[:10])
+    print("Runner:", scores_runner[:10])
+    print("Max difference:", np.max(np.abs(scores_direct - scores_runner)))
+
+    print("Threshold:", runner.thresholding.get_threshold())
+    print("Validation score range:", scores_direct.min(), scores_direct.max())
+    print("Predictions:", np.unique(runner.predict(X_val), return_counts=True))
+
+
 if __name__ == "__main__":
     main()
 

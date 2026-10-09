@@ -31,6 +31,9 @@ def main(cfg):
     _, _, X_test, y_test = data.load()
 
 
+    print(len(X_test))
+
+
     # select best model (first in my tbale, i should add a rank column)
     root_dir = Path(to_absolute_path(cfg.paths.root_dir))
     tracking_db = root_dir / "mlflow.db"
@@ -64,6 +67,9 @@ def main(cfg):
         y_test,
     )
 
+
+    print('y_t_W', y_test_w)
+
     metrics = evaluator.evaluate(
         scores=scores,
         y_true=y_test_w,
@@ -82,6 +88,12 @@ def main(cfg):
 
 
     #print(runner.thresholding....)
+    # inmspewc threshold
+    #print("Threshold:", runner.thresholding.get_threshold())
+    
+
+    #print("Validation score range:", scores_direct.min(), scores_direct.max())
+    #print("Predictions:", np.unique(runner.predict(X_val), return_counts=True))
 
     
 
@@ -90,6 +102,15 @@ def main(cfg):
     y_test_aligned = y_test[window_size - 1:]
     assert len(scores) == len(y_test_aligned)
     """
+
+
+    # inference
+    import random
+    X = np.random.randn(20, 78)
+
+    predictions = runner.predict(X)
+
+    print(predictions)
 
 
 

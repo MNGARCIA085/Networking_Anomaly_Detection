@@ -114,8 +114,20 @@ class ExperimentPipeline:
 
         thresholding_cfg = cfg["model_type"].get("thresholding")
 
+
+        print(thresholding_cfg)
+
         if thresholding_cfg:
             thresholding = Thresholding(thresholding_cfg)
+
+            import numpy as np
+            print("Scores:", np.min(val_scores), np.max(val_scores))
+            print("Unique labels:", np.unique(y_val, return_counts=True))
+            print("Anomaly score means:")
+            print("  Benign:", val_scores[y_val == 0].mean())
+            print("  Anomaly:", val_scores[y_val == 1].mean())
+
+
 
             thresholding.fit(
                 scores=val_scores,

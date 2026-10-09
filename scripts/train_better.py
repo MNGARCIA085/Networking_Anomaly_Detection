@@ -40,6 +40,19 @@ def main(cfg: DictConfig):
 
     X_train, y_train, X_val, y_val = data.load()
 
+
+
+    # AEs fit with normal data
+    # AE training: retain only benign samples
+    mask = y_train == 0
+    X_train = X_train.loc[mask]
+    y_train = y_train.loc[mask]
+
+    print("Train labels:", y_train.value_counts().to_dict())
+    print("Validation labels:", y_val.value_counts().to_dict())
+
+
+
     # --------------------------------------------------
     # Preprocessing
     # --------------------------------------------------
@@ -86,6 +99,11 @@ def main(cfg: DictConfig):
     from network_anomaly_detection.evaluation.evaluator import Evaluator
 
     evaluator = Evaluator()
+
+
+
+    print(len(X_train))
+
 
     result = experiment.run(
         prep=prep, # already fit

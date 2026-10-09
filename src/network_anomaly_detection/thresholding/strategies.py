@@ -8,7 +8,7 @@ class ConstrainedF1Threshold(ThresholdStrategy):
 
     def __init__(
         self,
-        min_recall=0.80,
+        min_recall=0.50,
     ):
         self.min_recall = min_recall
         self.threshold = None

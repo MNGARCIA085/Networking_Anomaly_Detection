@@ -46,7 +46,7 @@ class DataModule:
         df = (
             df.replace([np.inf, -np.inf], np.nan)
               .dropna()
-              .head(500)
+              .head(7000)
         )
 
         df.columns = df.columns.str.strip()
@@ -59,10 +59,42 @@ class DataModule:
         # BENIGN = normal (0), everything else = anomaly (1)
         y = (labels != "BENIGN").astype(int)
 
+
+        # aes only with normal data; but only train, NOT filter val!!!!
+        """
+        mask = y == 0
+        X = X.loc[mask]
+        y = y.loc[mask]
+        """
+
         return X, y
 
 
+    # reconstructive models -> trained on mostly ormal data
+    def _split_features_labelsbbbb(df: pd.DataFrame, train_ae=True):
+        import numpy as np
 
+        # Cleaning / subset for testing
+        df = (
+            df.replace([np.inf, -np.inf], np.nan)
+              .dropna()
+              .copy()
+        )
+
+        df.columns = df.columns.str.strip()
+        df = df.head(5000)  # Temporary subset for testing
+
+        labels = df["Label"].astype(str).str.strip().str.upper()
+        X = df.drop(columns=["Label"])
+        y = (labels != "BENIGN").astype(int)
+
+        # AE training: normal traffic only
+        if train_ae:
+            mask = y == 0
+            X = X.loc[mask]
+            y = y.loc[mask]
+
+        return X, y
 
 
 

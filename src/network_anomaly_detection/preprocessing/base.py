@@ -165,17 +165,22 @@ class BasePrep(ABC):
 
 
 
+"""
+```python
+import joblib
+from abc import ABC, abstractmethod
+
+from network_anomaly_detection.data.windowing import Windowing
 
 
-
-
-class BasePrepv0(ABC):
-    """ constructs and orchestrates the preprocessing stages """
+class BasePrep(ABC):
+Constructs and orchestrates preprocessing stages.
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.pipeline = None
-
+        self.pointwise_prep = None
+        self.windowing = None
+        self.temporal_prep = None
 
     @abstractmethod
     def build_pointwise_prep(self, cfg):
@@ -185,14 +190,10 @@ class BasePrepv0(ABC):
     def build_temporal_prep(self, cfg):
         pass
 
-    # actually is not per class; and win_size=1 equals no windowing
     def build_windowing(self, cfg):
         return Windowing(cfg.size, cfg.stride)
 
-
     def build_preprocessing_stages(self):
-
-
         self.pointwise_prep = self.build_pointwise_prep(
             self.cfg.get("prep", {}).get("pointwise")
         )
@@ -204,65 +205,36 @@ class BasePrepv0(ABC):
         self.temporal_prep = self.build_temporal_prep(
             self.cfg.get("prep", {}).get("temporal_prep")
         )
-        
 
-        return (
-            self.pointwise_prep,
-            self.windowing,
-            self.temporal_prep,
-        )
+    # --------------------------------------------------
+    # FIT
+    # --------------------------------------------------
 
+    def fit(self, X, y=None):
+        self.build_preprocessing_stages()
 
+        # Pointwise preprocessing
+        if self.pointwise_prep:
+            self.pointwise_prep.fit(X)
+            X = self.pointwise_prep.transform(X)
 
-    def build_prep(
-        self,
-        X_train,
-        y_train,
-        X_val,
-        y_val,
-    ):
-        pointwise_prep, windowing, temporal_prep = (
-            self.build_preprocessing_stages()
-        )
+        # Windowing is stateless; labels are aligned if provided.
+        if self.windowing:
+            if y is not None:
+                X, _ = self.windowing.transform(X, y)
+            else:
+                X = self.windowing.transform(X)
 
+        # Fit on the representation produced by previous stages.
+        if self.temporal_prep:
+            self.temporal_prep.fit(X)
 
-        # Pointwise
-        if pointwise_prep:
-            X_train = pointwise_prep.fit_transform(X_train)
-            X_val = pointwise_prep.transform(X_val)
+        return self
 
+    # --------------------------------------------------
+    # TRANSFORM
+    # --------------------------------------------------
 
-
-        # Windowing
-        if windowing:
-            X_train, y_train = windowing.transform(
-                X_train,
-                y_train,
-            )
-
-            X_val, y_val = windowing.transform(
-                X_val,
-                y_val,
-            )
-
-
-        # temporal prep
-        if temporal_prep:
-            X_train = temporal_prep.fit_transform(X_train)
-            X_val = temporal_prep.transform(X_val)
-
-
-        # adapt input here or in the model??????
-
-        return (
-            X_train,
-            y_train,
-            X_val,
-            y_val,
-        )
-
-
-    # for inference later
     def transform(self, X):
         if self.pointwise_prep:
             X = self.pointwise_prep.transform(X)
@@ -274,7 +246,6 @@ class BasePrepv0(ABC):
             X = self.temporal_prep.transform(X)
 
         return X
-
 
     def transform_with_labels(self, X, y):
         if self.pointwise_prep:
@@ -288,15 +259,28 @@ class BasePrepv0(ABC):
 
         return X, y
 
+    # --------------------------------------------------
+    # SAVE / LOAD
+    # --------------------------------------------------
 
-
-    #------SAVE AND LOAD PIPELINE---------#
     def save(self, path):
         joblib.dump(self, path)
 
     @classmethod
     def load(cls, path):
         return joblib.load(path)
+```
+Important: this preserves your existing behavior, but assumes Windowing.transform(X, y) returns
+ (X_windows, y_windows) and Windowing.transform(X) returns only X_windows. It also assumes 
+temporal preprocessing should be fitted on windowed training features.
+
+One caveat: if you later introduce a temporal preprocessor that needs labels to fit, 
+this API will need to be extended. For your current design, there are no obvious critical 
+bugs in this class based on the code provided.
+
+
+"""
+
 
 
 

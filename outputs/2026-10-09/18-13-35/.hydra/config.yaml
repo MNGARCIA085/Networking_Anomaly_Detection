@@ -1,0 +1,203 @@
+random_state: 42
+experiment_name: network_anomaly_detection
+paths:
+  root_dir: .
+  mlflow_db: mlflow.db
+  mlflow_artifacts: mlruns
+tracking:
+  enabled: true
+model_type:
+  data:
+    train_path: data/arriba.csv
+    val_path: data/arriba.csv
+    y_val_path: data/arriba.csv
+    test_path: data/arriba.csv
+    y_test_path: data/arriba.csv
+    windowing:
+      enabled: true
+      size: 10
+      stride: 1
+  models:
+    encoder_dims:
+    - 8
+    - 4
+    decoder_dims:
+    - 8
+  training:
+    batch_size: 32
+    epochs: 35
+    type: default
+    optimizer:
+      name: adam
+      params:
+        lr: 0.001
+        betas:
+        - 0.9
+        - 0.999
+    loss:
+      name: mse
+    callbacks:
+    - name: print_loss
+    - name: early_stopping
+      params:
+        patience: 5
+    - name: checkpoint
+      params:
+        every_n_epochs: 10
+        keep_last: 2
+        save_best: true
+        monitor: val_loss
+        mode: min
+    num_workers: 1
+  tuning:
+    random_state: 42
+    metric: pr_auc
+    direction: maximize
+    n_trials: 2
+    n_jobs: 2
+    data:
+      windowing:
+        size:
+          choices:
+          - 1
+          - 5
+          - 10
+          - 20
+    prep:
+      imputation:
+        names:
+        - simple
+        strategy:
+          choices:
+          - mean
+          - median
+          - most_frequent
+      transform:
+        names:
+        - power
+        params:
+          method:
+            choices:
+            - yeo-johnson
+            - box-cox
+          standardize:
+            choices:
+            - true
+            - false
+      scaler:
+        names:
+        - standard
+        - minmax
+    model_space:
+      encoder_dims:
+      - name: enc1
+        type: int
+        low: 16
+        high: 64
+      - name: enc2
+        type: int
+        low: 4
+        high: 32
+      decoder_dims:
+      - name: dec1
+        type: int
+        low: 16
+        high: 64
+    training_space:
+      optimizer:
+        names:
+        - adam
+        - sgd
+        adam:
+          lr:
+            low: 0.0001
+            high: 0.01
+            log: true
+          betas:
+            choices:
+            - - 0.9
+              - 0.999
+            - - 0.8
+              - 0.999
+        sgd:
+          lr:
+            low: 0.001
+            high: 0.1
+            log: true
+          momentum:
+            low: 0.0
+            high: 0.9
+          weight_decay:
+            low: 1.0e-06
+            high: 0.01
+            log: true
+      callbacks:
+        print_loss: true
+        early_stopping:
+          enabled: true
+          patience:
+            low: 3
+            high: 10
+      epochs:
+        name: epochs
+        type: int
+        low: 2
+        high: 8
+      batch_size:
+        name: batch_size
+        type: categorical
+        choices:
+        - 32
+        - 64
+    thresholding:
+      name: constrained_f1
+      params:
+        min_recall: 0.8
+  prep:
+    pointwise:
+      imputation:
+        enabled: true
+        name: simple
+        params:
+          strategy: median
+      scaler:
+        enabled: true
+        name: standard
+        params:
+          with_mean: true
+          with_std: true
+      transform:
+        enabled: true
+        name: power
+        params:
+          method: yeo-johnson
+          standardize: false
+    windowing:
+      size: 3
+      stride: 1
+    temporal_prep:
+      delta:
+        enable: false
+        name: delta
+        params:
+          order: 1
+      rolling:
+        enabled: false
+        name: rolling_stats
+        params:
+          window: 5
+  thresholding:
+    name: constrained_f1
+    params:
+      min_recall: 0.5
+  name: ae
+data:
+  train_path: data/arriba.csv
+  val_path: data/arriba.csv
+  y_val_path: data/arriba.csv
+  test_path: data/arriba.csv
+  y_test_path: data/arriba.csv
+  windowing:
+    enabled: true
+    size: 10
+    stride: 1

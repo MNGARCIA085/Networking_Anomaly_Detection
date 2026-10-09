@@ -1,0 +1,2 @@
+- model_type=ae
+- model_type.training.epochs=300
