@@ -74,7 +74,7 @@ class MLFlowLogger(ExperimentLogger):
             #mlflow_dir=self.artifact_dir,
             logger = self,
             candidate_pool_size=5,
-            min_pr_auc=0.70,
+            min_pr_auc=0.50,
             max_candidates_per_model=2,
         )
         # later -> values from YAML
@@ -469,6 +469,60 @@ class MLFlowLogger(ExperimentLogger):
             )
 
         return path
+
+
+
+    #----------------save models--------------------#
+    def log_candidate_model(
+        self,
+        model,
+        metrics,
+        model_family,
+    ):
+        run = mlflow.active_run()
+
+        if run is None:
+            raise RuntimeError("No active MLflow run.")
+
+        val_pr_auc = metrics.get("pr_auc")
+
+
+        if val_pr_auc is None:
+            return False
+
+        
+        retain = self.candidate_manager.should_retain(
+            experiment_id=int(run.info.experiment_id),
+            model_family=model_family,
+            val_pr_auc=float(val_pr_auc),
+        )
+
+        if not retain:
+            return False
+        
+
+        path = self.artifact_path("model")
+
+        model.save(path)
+
+
+        """
+        self.log_artifact(
+            path,
+            artifact_path="model",
+        )
+        """
+
+
+        self.candidate_manager.register_candidate(
+            experiment_id=int(run.info.experiment_id),
+            run_id=run.info.run_id,
+            model_family=model_family,
+            val_pr_auc=float(val_pr_auc),
+            artifact_path="model",
+        )
+
+        return True
 
 
     

@@ -6,6 +6,8 @@ from network_anomaly_detection.models.base_model import BaseModel
 from .schemas import AEConfig
 
 
+from network_anomaly_detection.models.persistence.torch import save_torch_model,load_torch_model
+
 
 
 
@@ -50,26 +52,7 @@ class AE(nn.Module):
         )
 
 
-"""
-class AEModel(BaseModel):
 
-    def __init__(
-        self,
-        cfg: AEConfig,
-        input_shape,
-    ):
-        self.config = cfg
-
-        input_dim = int(np.prod(input_shape))
-
-        self.model = AE(
-            AEConfig(
-                input_dim=input_dim,
-                encoder_dims=cfg.encoder_dims,
-                decoder_dims=cfg.decoder_dims,
-            )
-        )
-"""
 
 
 class AEModel(BaseModel):
@@ -115,6 +98,30 @@ class AEModel(BaseModel):
     def predict(self, X, threshold):
         scores = self.score(X)
         return (scores >= threshold).astype(int)
+
+
+
+    # save and load
+    def save(self, path):
+
+        save_torch_model(
+            self.model,
+            path
+        )
+
+    @classmethod
+    def load(cls, path):
+
+        model = load_torch_model(
+            AE,
+            path
+        )
+
+        return cls(
+            model=model,
+            trainer=None
+        )
+
 
 
 

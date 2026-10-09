@@ -9,7 +9,7 @@ class CandidateManager:
         registry,
         logger,
         candidate_pool_size=5,
-        min_pr_auc=0.70,
+        min_pr_auc=0.50,
         max_candidates_per_model=2,
     ):
         self.registry = registry
@@ -29,6 +29,7 @@ class CandidateManager:
         model_family,
         val_pr_auc,
     ):
+
         if val_pr_auc < self.min_pr_auc:
             return False
 

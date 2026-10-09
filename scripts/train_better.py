@@ -1,4 +1,5 @@
 import hydra
+from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
 
 from network_anomaly_detection.data.data_module import DataModule
@@ -61,11 +62,16 @@ def main(cfg: DictConfig):
     # Experiment
     # --------------------------------------------------
 
-    logger = MLFlowLogger()
+    
+    #logger = MLFlowLogger()
+    logger = MLFlowLogger(
+        tracking_db=to_absolute_path(cfg.paths.mlflow_db),
+        artifact_dir=to_absolute_path(cfg.paths.mlflow_artifacts),
+    )
 
 
 
-    print(type(cfg))
+    #print(type(cfg))
     from omegaconf import OmegaConf
 
     cfg = OmegaConf.to_container(cfg, resolve=True)

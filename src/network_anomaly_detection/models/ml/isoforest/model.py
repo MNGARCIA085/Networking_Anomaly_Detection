@@ -6,6 +6,8 @@ from network_anomaly_detection.models.base_model import BaseModel
 from network_anomaly_detection.models.ml.isoforest.schemas import IsoForestConfig
 
 
+from network_anomaly_detection.models.persistence.sklearn import save_sklearn_model, load_sklearn_model
+
 
 
 
@@ -43,6 +45,27 @@ class IsoForestModel(BaseModel):
     def fit(self, X):
         self.model.fit(X)
         return self
+
+    # save & load
+    def save(self, path):
+
+        save_sklearn_model(
+            self.model,
+            path
+        )
+
+
+    @classmethod
+    def load(cls, path):
+
+        model = load_sklearn_model(
+            path
+        )
+
+        return cls(
+            model=model
+        )
+
 
 
 

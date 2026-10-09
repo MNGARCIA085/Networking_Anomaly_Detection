@@ -129,6 +129,8 @@ class ExperimentPipeline:
             predictions=predictions,
         )
 
+        print(metrics)
+
         self.logger.log_metrics(metrics)
 
         # --------------------------------------------------
@@ -138,7 +140,16 @@ class ExperimentPipeline:
         if trainer.history is not None:
             self.logger.log_training_history(trainer.history)
 
-        print(metrics)
+        
+
+        #.... log model if its good enough
+        self.logger.log_candidate_model(
+                model,
+                metrics,
+                model_cfg["name"]
+            )
+
+
 
         return {
             "prep": prep,
@@ -303,10 +314,6 @@ class ExperimentPipeline:
                 threshold = None
 
 
-            print(threshold)
-
-
-
             predictions = model.predict(
                 X_val,
                 threshold=threshold,
@@ -327,6 +334,17 @@ class ExperimentPipeline:
 
             if trainer.history is not None:
                 self.logger.log_training_history(trainer.history)
+
+
+
+            #.... log model if its good enough
+            self.logger.log_candidate_model(
+                    model,
+                    metrics,
+                    model_cfg["name"]
+                )
+
+
 
             return {
                 "prep": prep,

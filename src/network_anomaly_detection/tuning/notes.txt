@@ -1,0 +1,243 @@
+
+
+
+
+
+Tuning design
+
+1. Tuner orchestrates the search. It receives the base configuration, training/validation data, preprocessing/model execution dependencies, evaluator, and tuning settings.
+
+2. The sampler builds each trial configuration. A model-specific sampler (e.g. AESampler, IsoForestSampler) receives the base config, deep-copies it, samples hyperparameters using Optuna's trial, and returns a complete configuration. It changes only tuned parameters, preserving fixed settings.
+
+3. Each Optuna trial runs an experiment. The objective uses the sampled config to construct preprocessing, model, and trainer, then trains and evaluates on validation data. It returns the configured objective metric (e.g. PR-AUC) to Optuna.
+
+4. Optuna manages the search. It proposes trial parameters, receives objective values, and selects subsequent configurations according to the study's optimization strategy.
+
+5. The best trial is recorded. Persist the best parameters, objective value, and configuration; optionally rerun the best configuration as a normal tracked Experiment.
+
+Information the Tuner needs
+
+Base resolved configuration.
+
+X_train, y_train, X_val, y_val.
+
+Sampler for the selected model.
+
+Objective metric and direction (maximize or minimize).
+
+Number of trials and study settings.
+
+The execution dependencies needed to build and run each trial.
+
+Key distinction: the sampler decides what configuration to try; the Experiment/Pipeline executes it; the evaluator measures its performance; Optuna decides what to try next
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------------------------------
+
+
+
+
+
+Design principles — network_anomaly_detection
+1. Experiment is the basic unit
+
+An Experiment represents one complete, reproducible ML execution: configuration, preprocessing, model, training, validation, evaluation, and artifacts.
+
+Experiment.run() starts a normal experiment.
+
+Experiment.resume() resumes training from an existing run and checkpoint.
+
+Experiment owns the run lifecycle and coordinates the pipeline and experiment tracking.
+
+run_id belongs at the Experiment level, not the Pipeline level.
+
+2. Separate orchestration from implementation
+
+Each component has one clear responsibility.
+
+Component
+
+	
+
+Responsibility
+
+
+
+
+Experiment
+
+	
+
+Run lifecycle, orchestration, tracking
+
+
+
+
+ExperimentPipeline
+
+	
+
+Execute the ML workflow
+
+
+
+
+Prep
+
+	
+
+Fit and apply preprocessing
+
+
+
+
+Model
+
+	
+
+Model construction, input adaptation, scoring, prediction
+
+
+
+
+Trainer
+
+	
+
+Model fitting
+
+
+
+
+Evaluator
+
+	
+
+Compute evaluation metrics
+
+
+
+
+Thresholding
+
+	
+
+Convert anomaly scores into binary predictions
+
+
+
+
+Tuner / Sampler
+
+	
+
+Search configurations and run tuning trials
+
+
+
+
+Logger
+
+	
+
+Track metrics, parameters, and artifacts
+
+Avoid combining model and trainer responsibilities in a wrapper. The model defines how inference works; the trainer defines how fitting works.
+
+3. Use registries for extensibility
+
+Central registries select implementations by configuration:
+
+PREP_REGISTRY
+
+MODEL_REGISTRY
+
+TRAINER_REGISTRY
+
+TUNING_REGISTRY
+
+Adding a model should primarily require implementing its components and registering them, rather than modifying the central execution flow.
+
+4. Keep interfaces generic; isolate model-specific behavior
+
+Define common contracts where they make sense, but do not force neural-network assumptions onto classical ML models.
+
+For example:
+
+Neural-network trainers may manage epochs, optimizers, schedulers, callbacks, and checkpoint restoration.
+
+An Isolation Forest trainer only needs to fit the estimator.
+
+Models expose common operations such as adapt_input, score, and predict, while handling their own input requirements.
+
+5. Make preprocessing an explicit, reproducible pipeline
+
+Preprocessing is fitted using training data only, then applied consistently to validation and test data.
+
+The pipeline follows a canonical flow:
+
+Prep → adapt_input → Model → score → Thresholding → Evaluator
+
+Preprocessing stages remain modular: pointwise operations, optional windowing, window-level operations, and temporal transformations.
+
+6. Configuration is the source of truth
+
+Use YAML/Hydra to compose configuration.
+
+Convert configuration to plain dictionaries at the runtime boundary.
+
+Use dictionary access consistently at runtime.
+
+Deep-copy the base configuration for tuning trials.
+
+Change only tuned parameters; preserve fixed model settings.
+
+Save the resolved configuration with each run.
+
+Keep the existing configuration hierarchy consistent: prep is top-level, while model-specific thresholding lives under model_type.
+
+7. Resume must reproduce the original experiment
+
+Resume is not a new experiment with arbitrary current settings. It must restore the state required to continue the original run:
+
+Original resolved configuration.
+
+Fitted preprocessing artifact.
+
+Model architecture and checkpoint.
+
+Optimizer state and training progress, where applicable.
+
+Consistent training and validation data.
+
+A resumed run should be traceable to its parent run. Do not silently change datasets or refit preprocessing.
+
+8. Separate training, model selection, and evaluation
+
+Fit preprocessing and models using training data.
+
+Use validation data for tuning, threshold selection, and model selection.
+
+Keep the final test set held out until the evaluation stage.
+
+For anomaly detection, distinguish anomaly scoring from threshold selection. A model's recall under its native decision boundary does not guarantee that a configured thresholding strategy can satisfy its minimum-recall constraint.
+
+9. Treat experiment tracking as part of the architecture
+
+Track configuration, parameters, metrics, preprocessing artifacts, and checkpoints. Keep the logger responsible for persistence rather than scattering tracking logic across model implementations.
+
+A resumed run should preserve lineage to the original run while recording its own continuation metrics and artifacts.
+
+The overarching principle: build a modular ML execution framework in which an Experiment is the reproducible unit, the Pipeline coordinates components, and each component owns a narrow responsibility. New models and training strategies should fit into that framework without requiring architectural changes.
