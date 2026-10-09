@@ -8,7 +8,8 @@ from network_anomaly_detection.models.ml.isoforest.schemas import IsoForestConfi
 
 from network_anomaly_detection.models.persistence.sklearn import save_sklearn_model, load_sklearn_model
 
-
+from pathlib import Path
+import joblib
 
 
 
@@ -46,6 +47,37 @@ class IsoForestModel(BaseModel):
         self.model.fit(X)
         return self
 
+
+
+
+
+    def save(self, path):
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+
+        save_sklearn_model(self.model, path)
+
+        joblib.dump(
+            {"config": self.config},
+            path / "wrapper_config.pkl",
+        )
+
+
+    @classmethod
+    def load(cls, path):
+        path = Path(path)
+
+        wrapper_cfg = joblib.load(path / "wrapper_config.pkl")
+
+        instance = cls.__new__(cls)
+        instance.config = wrapper_cfg["config"]
+        instance.model = load_sklearn_model(path)
+
+        return instance
+
+
+
+    """
     # save & load
     def save(self, path):
 
@@ -65,6 +97,7 @@ class IsoForestModel(BaseModel):
         return cls(
             model=model
         )
+    """
 
 
 

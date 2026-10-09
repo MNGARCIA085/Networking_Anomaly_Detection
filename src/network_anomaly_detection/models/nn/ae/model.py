@@ -9,6 +9,9 @@ from .schemas import AEConfig
 from network_anomaly_detection.models.persistence.torch import save_torch_model,load_torch_model
 
 
+from pathlib import Path
+import joblib
+
 
 
 class AE(nn.Module):
@@ -60,6 +63,9 @@ class AEModel(BaseModel):
     def __init__(self, cfg: dict, input_shape):
         self.config = cfg
 
+        # new
+        self.input_shape = tuple(input_shape)
+
         input_dim = int(np.prod(input_shape))
 
         self.model = AE(
@@ -101,6 +107,29 @@ class AEModel(BaseModel):
 
 
 
+    # save & load
+    def save(self, path):
+        path = Path(path)
+        save_torch_model(self.model, path)
+        joblib.dump(
+            {"config": self.config, "input_shape": self.input_shape},
+            path / "wrapper_config.pkl",
+        )
+
+    @classmethod
+    def load(cls, path):
+        path = Path(path)
+        wrapper_cfg = joblib.load(path / "wrapper_config.pkl")
+
+        instance = cls.__new__(cls)
+        instance.config = wrapper_cfg["config"]
+        instance.input_shape = tuple(wrapper_cfg["input_shape"])
+        instance.model = load_torch_model(AE, path)
+
+        return instance
+
+
+    """
     # save and load
     def save(self, path):
 
@@ -117,11 +146,27 @@ class AEModel(BaseModel):
             path
         )
 
+        # givbes error, b caref. now i dont hjave a trainer
         return cls(
             model=model,
             trainer=None
         )
+    """
 
+
+
+
+"""
+This saves the weights only once in weights.pt. The files are:
+
+weights.pt — network weights.
+
+config.pkl — network configuration, saved by save_torch_model.
+
+wrapper_config.pkl — AEModel configuration and input shape.
+
+__new__ bypasses __init__, so the wrapper doesn't construct a second network or load the weights twice
+"""
 
 
 

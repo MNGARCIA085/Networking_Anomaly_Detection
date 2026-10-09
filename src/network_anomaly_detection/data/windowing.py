@@ -27,7 +27,54 @@ class Windowing:
             self.stride,
         )
 
-    def transform(self, X, y):
+
+
+    def transform(self, X, y=None): # y is opional for inference
+        X = np.asarray(X)
+
+        if X.ndim != 2:
+            raise ValueError(
+                f"Expected X with shape "
+                f"(n_samples, n_features), got {X.shape}"
+            )
+
+        if y is not None:
+            y = np.asarray(y)
+
+            if y.ndim != 1:
+                raise ValueError(
+                    f"Expected y with shape (n_samples,), got {y.shape}"
+                )
+
+            if len(X) != len(y):
+                raise ValueError(
+                    "X and y must have the same number of samples"
+                )
+
+        starts = self._get_starts(len(X))
+
+        X_windows = []
+        y_windows = []
+
+        for i in starts:
+            X_windows.append(X[i:i + self.seq_len])
+
+            if y is not None:
+                # Window is anomalous if any point is anomalous
+                y_windows.append(
+                    int(np.any(y[i:i + self.seq_len] == 1))
+                )
+
+        X_windows = np.stack(X_windows)
+
+        if y is None:
+            return X_windows
+
+        return X_windows, np.asarray(y_windows)
+
+
+    """
+    def transformv0(self, X, y):
         X = np.asarray(X)
         y = np.asarray(y)
 
@@ -37,15 +84,18 @@ class Windowing:
                 f"(n_samples, n_features), got {X.shape}"
             )
 
+        
         if y.ndim != 1:
             raise ValueError(
                 f"Expected y with shape (n_samples,), got {y.shape}"
             )
 
+
         if len(X) != len(y):
             raise ValueError(
                 "X and y must have the same number of samples"
             )
+
 
         starts = self._get_starts(len(X))
 
@@ -66,6 +116,7 @@ class Windowing:
             np.stack(X_windows),
             np.asarray(y_windows),
         )
+    """
 
     def save(self, path):
         joblib.dump(self, path)

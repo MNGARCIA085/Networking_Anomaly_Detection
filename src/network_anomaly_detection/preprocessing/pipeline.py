@@ -8,6 +8,8 @@ class PreprocessingPipeline:
     def __init__(self, steps):
         self.steps = steps
 
+
+    """
     def fit(self, X):
         for step in self.steps:
             step.fit(X)
@@ -16,6 +18,20 @@ class PreprocessingPipeline:
 
     def transform(self, X):
         for step in self.steps:
+            X = step.transform(X)
+        return X
+    """
+
+    def fit(self, X):
+        for step in self.steps:
+            print(f"FIT  {type(step).__name__}: {type(X).__name__}")
+            step.fit(X)
+            X = step.transform(X)
+        return self
+
+    def transform(self, X):
+        for step in self.steps:
+            print(f"TRANSFORM  {type(step).__name__}: {type(X).__name__}")
             X = step.transform(X)
         return X
 

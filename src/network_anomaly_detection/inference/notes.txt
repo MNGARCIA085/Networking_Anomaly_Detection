@@ -1,0 +1,29 @@
+                    TRAINING
+                       │
+                       ▼
+                  MLflow run
+                       │
+                       ▼
+              ┌─────────────────┐
+              │     loader      │
+              │   MLflow →      │
+              │ InferenceRunner │
+              └────────┬────────┘
+                       │
+                       ▼
+              ┌─────────────────┐
+              │ InferenceRunner │
+              │                 │
+              │ prep            │
+              │ windowing       │
+              │ adapt_input     │
+              │ model           │
+              │ threshold       │
+              └────────┬────────┘
+                       │
+              ┌────────┴────────┐
+              ▼                 ▼
+          FastAPI           Benchmark
+                              │
+                              ▼
+                         inference_ms

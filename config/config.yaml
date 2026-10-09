@@ -2,6 +2,7 @@
 defaults:
   - _self_
   - model_type: ae
+  - data: data
   - override hydra/launcher: joblib
 
 random_state: 42

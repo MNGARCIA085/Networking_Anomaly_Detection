@@ -33,6 +33,15 @@ class ExperimentPipeline:
         # Configuration and logging
         # --------------------------------------------------
 
+
+        # tags
+        run_type = 'train'
+        self.logger.log_tags({
+            "run_type": run_type,
+            "model_type": model_cfg["name"],
+        })
+
+
         self.logger.log_params({
             "model": model_cfg["name"],
             "random_state": cfg["random_state"],
@@ -114,9 +123,20 @@ class ExperimentPipeline:
             )
 
             threshold = thresholding.get_threshold()
+
+
+            # save fitted thresholder
+            path = self.logger.artifact_path(
+                "thresholding/thresholding.pkl"
+            )
+            thresholding.save(path)
+
         else:
             thresholding = None
             threshold = None
+
+
+
 
         predictions = model.predict(
             X_val,
@@ -309,6 +329,11 @@ class ExperimentPipeline:
                 thresholding = Thresholding(thresholding_cfg)
                 thresholding.fit(scores=scores, y_val=y_val)
                 threshold = thresholding.get_threshold()
+                # save fitted thresholder
+                path = self.logger.artifact_path(
+                    "thresholding/thresholding.pkl"
+                )
+                thresholding.save(path)
             else:
                 thresholding = None
                 threshold = None
@@ -370,7 +395,7 @@ class ExperimentPipeline:
     def _save_prep(self, prep):
 
         prep_path = self.logger.artifact_path(
-            "prep.joblib",
+            "prep.pkl",
             artifact_dir=(
                 self.logger.run_artifact_dir() / "preprocessing"
             ),
