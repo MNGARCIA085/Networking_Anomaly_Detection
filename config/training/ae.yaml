@@ -1,5 +1,5 @@
 batch_size: 32
-epochs: 15
+epochs: 7
 type: "default" # or "vae", "transfer"
 
 optimizer:
@@ -16,14 +16,15 @@ loss:
 
 callbacks:
   - name: print_loss
+
   - name: early_stopping
     params:
       patience: 15
-
+      monitor: val_loss
+      mode: min
 
   - name: checkpoint
     params:
-      #directory: checkpoints, for v0
       every_n_epochs: 10
       keep_last: 2
       save_best: true

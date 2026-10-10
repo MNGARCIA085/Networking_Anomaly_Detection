@@ -50,23 +50,41 @@ prep:
 
 
   
+
+
 model_space:
   encoder_dims:
     - name: enc1
       type: int
-      low: 16
-      high: 64
+      low: 32
+      high: 128
+      step: 16
 
     - name: enc2
       type: int
+      low: 8
+      high: 64
+      step: 8
+
+    - name: enc3
+      type: int
       low: 4
       high: 32
+      step: 4
 
   decoder_dims:
     - name: dec1
       type: int
-      low: 16
+      low: 8
       high: 64
+      step: 8
+
+    - name: dec2
+      type: int
+      low: 32
+      high: 128
+      step: 16
+
 
 
 training_space:
@@ -113,8 +131,8 @@ training_space:
   epochs:
     name: epochs
     type: int
-    low: 2
-    high: 8
+    low: 20
+    high: 40
 
   batch_size:
     name: batch_size
@@ -125,4 +143,4 @@ training_space:
 thresholding:
   name: constrained_f1
   params:
-    min_recall: 0.80
+    min_recall: 0.75

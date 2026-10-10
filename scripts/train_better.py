@@ -37,6 +37,7 @@ def main(cfg: DictConfig):
     )
     """
 
+    
     data = DataModule(
         "data/X_train.csv",
         "data/X_test.csv",

@@ -29,15 +29,24 @@ def main(cfg: DictConfig):
     """
     
 
-    
+    """
     data = DataModule(
         "data/data.csv",
         "data/data.csv",
     )
-    
+    """
+    data = DataModule(
+        "data/X_train.csv",
+        "data/X_test.csv",
+    )
 
 
     X_train, y_train, X_val, y_val = data.load()
+
+    # only AEs...
+    mask = y_train == 0
+    X_train = X_train.loc[mask]
+    y_train = y_train.loc[mask]
 
     # --------------------------------------------------
     # Preprocessing
@@ -104,7 +113,8 @@ def main(cfg: DictConfig):
     # ========= Retrain best model ========= #
     best_cfg = tuner.get_best_config(study)
 
-    print("Best config:")
+
+    print("\n\n\n\nBest config:")
     print(best_cfg)
 
 

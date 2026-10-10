@@ -500,8 +500,8 @@ class MLFlowLogger(ExperimentLogger):
             val_pr_auc=float(val_pr_auc),
         )
 
-        if not retain:
-            return False
+        #if not retain:
+        #    return False
         
 
         path = self.artifact_path("model")

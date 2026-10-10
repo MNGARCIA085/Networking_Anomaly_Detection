@@ -27,7 +27,8 @@ def main(cfg):
 
     parser.add_argument(
         "--run-id",
-        default="cb96d7f12a3648638932c3a0f76d71ce",
+        default="a01636f58f0f47f8a4983d21f40719b0",
+        #default="cb96d7f12a3648638932c3a0f76d71ce",
         #default="291831267ea24f1da923c0cd0466f138",
         #default="d18e0d3181074088a1a69c426eb2a697",
         #required=True,
@@ -35,7 +36,8 @@ def main(cfg):
 
     parser.add_argument(
         "--checkpoint",
-        default="best.pt",
+        #default="best.pt",
+        default="last.ckpt",
     )
 
     args = parser.parse_args()
@@ -71,8 +73,8 @@ def main(cfg):
     """
 
     data = DataModule(
-        "data/data.csv",
-        "data/data.csv",
+        "data/X_train.csv",
+        "data/X_test.csv",
     )
 
     X_train, y_train, X_val, y_val = data.load()
@@ -103,7 +105,8 @@ def main(cfg):
         y_train,
         X_val,
         y_val,
-        checkpoint="best.pt",
+        #checkpoint="best.pt",
+        checkpoint="last.ckpt",
         run_name=None,
     )
 
