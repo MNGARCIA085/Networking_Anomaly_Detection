@@ -206,8 +206,83 @@ class MLFlowLogger(ExperimentLogger):
         )
 
 
+
+
+    
+    def log_training_history(self, history):
+
+
+        print({
+            metric: len(values)
+            for metric, values in history.items()
+        })
+
+
+
+
+        if not history:
+            return
+
+        # ---------- CSV ----------
+        df = pd.DataFrame(history)
+
+        csv_path = self.artifact_path("history.csv")
+        df.to_csv(csv_path, index=False)
+
+        self.log_artifact(csv_path, artifact_path="training")
+
+        # ---------- One plot per metric ----------
+        for metric, values in history.items():
+            if not values:
+                continue
+
+            plt.figure()
+            plt.plot(range(1, len(values) + 1), values)
+
+            plt.xlabel("Epoch")
+            plt.ylabel(metric)
+            plt.title(metric)
+
+            fig_path = self.artifact_path(f"{metric}.png")
+            plt.savefig(fig_path, bbox_inches="tight")
+            plt.close()
+
+            self.log_artifact(fig_path, artifact_path="training")
+
+        # ---------- Combined plot ----------
+        metrics = {
+            metric: values
+            for metric, values in history.items()
+            if values
+        }
+
+        if not metrics:
+            return
+
+        plt.figure()
+
+        for metric, values in metrics.items():
+            plt.plot(
+                range(1, len(values) + 1),
+                values,
+                label=metric,
+            )
+
+        plt.xlabel("Epoch")
+        plt.ylabel("Value")
+        plt.title("Training History")
+        plt.legend()
+
+        fig_path = self.artifact_path("history.png")
+        plt.savefig(fig_path, bbox_inches="tight")
+        plt.close()
+
+        self.log_artifact(fig_path, artifact_path="training")
+
+
+
     # training history
-    def log_training_history(
+    def log_training_historyv0(
         self,
         history
     ):

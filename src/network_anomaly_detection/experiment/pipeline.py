@@ -8,6 +8,12 @@ from network_anomaly_detection.preprocessing.base import BasePrep
 from network_anomaly_detection.thresholding.thresholding import Thresholding
 
 
+import mlflow
+from pathlib import Path
+
+
+
+
 class ExperimentPipeline:
     """Orchestrates an experiment; Lightning details stay inside NNTrainer."""
 
@@ -58,8 +64,6 @@ class ExperimentPipeline:
 
 
         """
-        import mlflow
-
         for filename in ("last.ckpt",):
             path = os.path.join(checkpoint_dir, filename)
             if os.path.isfile(path):
@@ -78,8 +82,6 @@ class ExperimentPipeline:
             thresholding = Thresholding(thresholding_cfg)
             thresholding.fit(scores=val_scores, y_val=y_val)
             threshold = thresholding.get_threshold()
-            #path = self.logger.artifact_path("thresholding/thresholding.pkl")
-            #thresholding.save(path)
             # save fitted thresholder
             path = self.logger.artifact_path(
                 "thresholding/thresholding.pkl"
@@ -96,6 +98,17 @@ class ExperimentPipeline:
             predictions=predictions,
         )
         self.logger.log_metrics(metrics)
+
+
+        #history = trainer.history
+        #if history is not None:
+        #    self.logger.log_training_history(history)
+
+        if trainer.history:
+            self.logger.log_training_history(trainer.history)
+
+
+        
 
 
         """
@@ -150,10 +163,7 @@ class ExperimentPipeline:
         checkpoint=None,
         run_name=None,
     ):
-        #Resume training from a Lightning checkpoint in an existing MLflow run.
-        import mlflow
-        from pathlib import Path
-        from copy import deepcopy
+        """Resume training from a Lightning checkpoint in an existing MLflow run."""
 
         cfg = self.cfg
         model_cfg = cfg["model_type"]
@@ -290,6 +300,12 @@ class ExperimentPipeline:
             # ---------------------------------------------------------
             # 8. Log training history and diagnostics
             # ---------------------------------------------------------
+
+
+            
+
+            if trainer.history:
+                self.logger.log_training_history(trainer.history)
             
             
             """
@@ -334,10 +350,13 @@ class ExperimentPipeline:
             })
             raise
 
+
+
+    # move to prep or logger accordingly
     def _save_prep(self, prep):
         # Keep this artifact path consistent with resume().
         prep_path = self.logger.artifact_path(
-            "prep.joblib",
+            "prep.pkl", #joblib
             artifact_dir=self.logger.run_artifact_dir() / "preprocessing",
         )
         prep.save(prep_path)

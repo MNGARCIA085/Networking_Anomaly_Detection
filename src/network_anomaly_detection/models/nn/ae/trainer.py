@@ -1,82 +1,12 @@
-
-from pathlib import Path
-
-import lightning.pytorch as pl
-from lightning.pytorch.callbacks import (
-    EarlyStopping,
-    ModelCheckpoint,
-)
-
-
-class PrintLossCallback(pl.Callback):
-
-    def on_train_epoch_end(self, trainer, pl_module):
-        metrics = trainer.callback_metrics
-
-        train_loss = metrics.get("train_loss")
-        val_loss = metrics.get("val_loss")
-
-        msg = f"Epoch {trainer.current_epoch + 1}"
-
-        if train_loss is not None:
-            msg += f" - Train Loss: {train_loss.item():.4f}"
-
-        if val_loss is not None:
-            msg += f" - Val Loss: {val_loss.item():.4f}"
-
-        print(msg)
-
-
-from lightning.pytorch.callbacks import (
-    EarlyStopping as LightningEarlyStopping,
-    ModelCheckpoint,
-)
-
-def create_callbacks(cfg, checkpoint_dir=None):
-    callbacks = []
-
-    for item in cfg or []:
-        name = item["name"]
-        params = item.get("params", {})
-
-        if name == "print_loss":
-            callbacks.append(PrintLossCallback())
-
-        elif name == "early_stopping":
-            callbacks.append(
-                LightningEarlyStopping(
-                    monitor=params.get("monitor", "val_loss"),
-                    mode=params.get("mode", "min"),
-                    patience=params.get("patience", 5),
-                )
-            )
-
-    
-
-        elif name == "checkpoint":
-            callbacks.append(
-                ModelCheckpoint(
-                    dirpath=checkpoint_dir,
-                    monitor=params.get("monitor", "val_loss"),
-                    mode=params.get("mode", "min"),
-                    save_top_k=1 if params.get("save_best", True) else 0,
-                    save_last=True,
-                    every_n_epochs=params.get("every_n_epochs", 1),
-                )
-            )
-
-    return callbacks
-
-
 from network_anomaly_detection.training.trainer import NNTrainer
 
-
 from network_anomaly_detection.training.nn.optimizers.registry import create_optimizer
+from network_anomaly_detection.training.nn.callbacks import create_callbacks
 from network_anomaly_detection.training.nn.losses import create_loss
-#from network_anomaly_detection.training.nn.callbacks.registry import create_callbacks
+
 from network_anomaly_detection.training.nn.schemas import TrainingConfig
 
-#from network_anomaly_detection.training.nn.trainer import NNTrainer
+
 
 
 class AETrainer(NNTrainer):
@@ -130,4 +60,36 @@ class VAELightningModule(AnomalyLightningModule):
         )
 
         return reconstruction_loss + kl_loss
+"""
+
+
+
+"""
+as ref for the class
+trainer_cls = TRAINER_REGISTRY[
+            cfg_training["type"]
+        ]
+
+        return trainer_cls(trainer_cfg)
+"""
+
+
+"""
+Your separation is sound:
+
+AEModel                  # project abstraction
+   │
+   └── AE                 # PyTorch implementation
+
+AETrainer
+   │
+   └── NNTrainer          # generic PyTorch training
+
+The responsibilities are well separated:
+
+AEModel: adapt_input, score, predict, model-specific inference.
+AE: nn.Module, architecture/forward.
+AETrainer: builds AE-specific training components.
+NNTrainer: generic PyTorch training loop.
+BaseModel: common anomaly-model contract, including Isolation Forest.
 """

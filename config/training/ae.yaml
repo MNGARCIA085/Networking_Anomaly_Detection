@@ -1,5 +1,5 @@
 batch_size: 32
-epochs: 7
+epochs: 6
 type: "default" # or "vae", "transfer"
 
 optimizer:

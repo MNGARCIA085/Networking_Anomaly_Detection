@@ -1,6 +1,9 @@
 
-import torch
 import lightning.pytorch as pl
+from torch.utils.data import DataLoader
+
+from network_anomaly_detection.training.nn.dataset import AnomalyDataset
+
 
 
 class AnomalyLightningModule(pl.LightningModule):
@@ -49,15 +52,10 @@ class AnomalyLightningModule(pl.LightningModule):
 
 
 
-from torch.utils.data import DataLoader
-import lightning.pytorch as pl
-
-#from .dataset import AnomalyDataset
-#from .lightning_module import AnomalyLightningModule
 
 
+from network_anomaly_detection.training.nn.callbacks import TrainingHistoryCallback
 
-from network_anomaly_detection.training.nn.dataset import AnomalyDataset
 
 
 class NNTrainer:
@@ -117,35 +115,16 @@ class NNTrainer:
         )
 
         self.lightning_trainer = trainer
-        self.history = trainer.callback_metrics
+        #self.history = trainer.callback_metrics
+        self.history = next(
+            (
+                cb.history
+                for cb in self.callbacks
+                if isinstance(cb, TrainingHistoryCallback)
+            ),
+            None,
+        )
 
         return self.model
 
 
-
-
-
-
-
-
-from lightning.pytorch.callbacks import (
-    ModelCheckpoint,
-    EarlyStopping,
-)
-
-callbacks = [
-    ModelCheckpoint(
-        dirpath="checkpoints/",
-        filename="epoch-{epoch:04d}",
-        every_n_epochs=10,
-        save_top_k=2,
-        monitor="val_loss",
-        mode="min",
-        save_last=True,
-    ),
-    EarlyStopping(
-        monitor="val_loss",
-        mode="min",
-        patience=8,
-    ),
-]
