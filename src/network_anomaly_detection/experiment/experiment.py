@@ -46,6 +46,7 @@ class Experiment:
         X_val,
         y_val,
         run_name=None,
+        metadata=None,
     ):
 
         self.start(
@@ -61,6 +62,8 @@ class Experiment:
                 y_train=y_train,
                 X_val=X_val,
                 y_val=y_val,
+                run_name=run_name,
+                metadata=metadata,
             )
 
             self.finish()

@@ -22,27 +22,78 @@ class ExperimentPipeline:
         self.logger = logger
         self.run_id = None
 
-    def run(self, prep, evaluator, X_train, y_train, X_val, y_val):
+
+
+    @staticmethod
+    def _build_run_config(cfg):
+        run_config = {
+            "experiment": {
+                "type": cfg["name"],
+                #"seed": cfg["random_state"],
+            },
+            "model": {
+                #"type": cfg["name"],
+                "params": cfg.get("models", {}),
+            },
+            "data": cfg["data"],
+            "preprocessing": cfg.get("prep", {}),
+            "thresholding": cfg.get("thresholding", {}),
+        }
+
+        #if cfg["experiment"]["type"] == "train":
+        run_config["training"] = cfg.get("training", {})
+
+        #elif cfg["experiment"]["type"] == "tune":
+        #    run_config["tuning"] = model_cfg.get("tuning", {})
+
+        return run_config
+
+
+
+
+    def run(self, 
+                prep, 
+                evaluator, 
+                X_train, 
+                y_train, 
+                X_val, 
+                y_val,
+                run_name=None,
+                metadata=None 
+            ):
+        
+
+
         cfg = self.cfg
         model_cfg = cfg["model_type"]
+        metadata = metadata or {}
 
+        # tags
         self.logger.log_tags({
             "run_type": "train",
             "model_type": model_cfg["name"],
             "status": "running",
         })
+
+        # common and important params
         self.logger.log_params({
             "model": model_cfg["name"],
             "random_state": cfg["random_state"],
             "window_size": model_cfg["data"]["windowing"]["size"],
             "window_stride": model_cfg["data"]["windowing"]["stride"],
         })
-        #self._log_config(cfg)
+
+        # config
+        self.logger.log_config(self._build_run_config(cfg["model_type"]))
+        
+        # metadata
+        self.logger.log_tags(metadata)
+
 
         # Preprocessing: fit should already have happened when prep was created.
         X_train, y_train = prep.transform_with_labels(X_train, y_train)
         X_val, y_val = prep.transform_with_labels(X_val, y_val)
-        self._save_prep(prep)
+        self.logger.save_prep(prep)
 
         # Model
         model_cls = MODEL_REGISTRY[model_cfg["name"]]
@@ -62,17 +113,6 @@ class ExperimentPipeline:
         )
         trainer.fit(X_train, y_train, X_val, y_val)
 
-
-        """
-        for filename in ("last.ckpt",):
-            path = os.path.join(checkpoint_dir, filename)
-            if os.path.isfile(path):
-                mlflow.log_artifact(path, artifact_path="checkpoints")
-
-        best_path = checkpoint_callback.best_model_path
-        if best_path and os.path.isfile(best_path):
-            mlflow.log_artifact(best_path, artifact_path="checkpoints")
-        """
 
         # Evaluation
         val_scores = model.score(X_val)
@@ -100,46 +140,29 @@ class ExperimentPipeline:
         self.logger.log_metrics(metrics)
 
 
-        #history = trainer.history
-        #if history is not None:
-        #    self.logger.log_training_history(history)
-
         if trainer.history:
             self.logger.log_training_history(trainer.history)
 
 
-        
 
-
-        """
-        history = trainer.history
-        if history is not None:
-            self.logger.log_training_history(history)
-
-        diagnostics = collect_diagnostics(
+        # diagnosis
+        self.logger.log_evaluation_diagnostics(
             y_true=y_val,
             scores=val_scores,
             predictions=predictions,
-            history=history,
         )
-        self.logger.log_diagnostics(diagnostics)
 
-        from dataclasses import dataclass, field
-
-        @dataclass
-        class TrainingHistory:
-            metrics: dict = field(default_factory=dict)
-            history = TrainingHistory(
-            metrics={
-                "train_loss": train_losses,
-                "val_loss": val_losses,
-            }
+        self.logger.log_validation_scores(
+            y_true=y_val,
+            scores=val_scores,
+            predictions=predictions,
         )
-        """
+
 
 
         self.logger.log_candidate_model(model, metrics, model_cfg["name"])
         self.logger.log_tags({"status": "finished"})
+
 
         return {
             "prep": prep,
@@ -148,9 +171,10 @@ class ExperimentPipeline:
             "thresholding": thresholding,
             "threshold": threshold,
             "metrics": metrics,
-            #"diagnostics": diagnostics,
             "config": deepcopy(cfg),
         }
+
+
 
     def resume(
         self,
@@ -176,7 +200,7 @@ class ExperimentPipeline:
             # ---------------------------------------------------------
             prep_path = self.logger.get_run_artifact_path(
                 run_id,
-                "preprocessing/prep.joblib",
+                "preprocessing/prep.pkl", # joblib
             )
             prep = BasePrep.load(prep_path)
 
@@ -301,19 +325,11 @@ class ExperimentPipeline:
             # 8. Log training history and diagnostics
             # ---------------------------------------------------------
 
-
-            
-
             if trainer.history:
                 self.logger.log_training_history(trainer.history)
             
             
             """
-            history = trainer.history
-
-            if history is not None:
-                self.logger.log_training_history(history)
-
             diagnostics = collect_diagnostics(
                 y_true=y_val,
                 scores=scores,
@@ -352,207 +368,8 @@ class ExperimentPipeline:
 
 
 
-    # move to prep or logger accordingly
-    def _save_prep(self, prep):
-        # Keep this artifact path consistent with resume().
-        prep_path = self.logger.artifact_path(
-            "prep.pkl", #joblib
-            artifact_dir=self.logger.run_artifact_dir() / "preprocessing",
-        )
-        prep.save(prep_path)
-        self.logger.log_artifact(prep_path, artifact_path="preprocessing")
-
-    """
-    def _log_config(self, cfg):
-        self.logger.log_text(
-            yaml.safe_dump(cfg, sort_keys=False),
-            "config.yaml",
-        )
-    """
 
 
-
-# prep as pkl and not jobliob!!!!!!!!
-
-"""
-nw resume
-def resume(
-    self,
-    run_id,
-    evaluator,
-    X_train,
-    y_train,
-    X_val,
-    y_val,
-    checkpoint=None,
-    run_name=None,
-):
-    Resume training from a Lightning checkpoint in an existing MLflow run.
-    import mlflow
-    from pathlib import Path
-    from copy import deepcopy
-
-    cfg = self.cfg
-    model_cfg = cfg["model_type"]
-    run = None
-    run_status = "FAILED"
-
-    try:
-        # ---------------------------------------------------------
-        # 1. Restore preprocessing and locate the parent checkpoint
-        # ---------------------------------------------------------
-        prep_path = self.logger.get_run_artifact_path(
-            run_id,
-            "preprocessing/prep.joblib",
-        )
-        prep = BasePrep.load(prep_path)
-
-        checkpoint_path = Path(
-            self.logger.get_checkpoint_path(run_id, checkpoint)
-        )
-
-        if not checkpoint_path.is_file():
-            raise FileNotFoundError(
-                f"Checkpoint not found: {checkpoint_path}"
-            )
-
-        if checkpoint_path.suffix != ".ckpt":
-            raise ValueError(
-                f"Expected a Lightning .ckpt file, got: {checkpoint_path}"
-            )
-
-        # ---------------------------------------------------------
-        # 2. Start a new MLflow run for the resumed experiment
-        # ---------------------------------------------------------
-        run = self.logger.start_run(
-            run_name=run_name or f"resume_{run_id}"
-        )
-        self.run_id = run.info.run_id
-
-        self.logger.log_tags({
-            "status": "running",
-            "run_type": "resume",
-            "parent_run_id": run_id,
-            "resumed_from_checkpoint": checkpoint_path.name,
-        })
-
-        self._log_config(cfg)
-
-        # ---------------------------------------------------------
-        # 3. Apply the fitted preprocessing
-        # ---------------------------------------------------------
-        X_train, y_train = prep.transform_with_labels(
-            X_train, y_train
-        )
-        X_val, y_val = prep.transform_with_labels(
-            X_val, y_val
-        )
-
-        # ---------------------------------------------------------
-        # 4. Reconstruct the model and adapt its input
-        # ---------------------------------------------------------
-        model_cls = MODEL_REGISTRY[model_cfg["name"]]
-
-        model = model_cls(
-            model_cfg["models"],
-            input_shape=X_train.shape[1:],
-        )
-
-        X_train = model.adapt_input(X_train)
-        X_val = model.adapt_input(X_val)
-
-        # ---------------------------------------------------------
-        # 5. Resume Lightning training
-        # ---------------------------------------------------------
-        trainer_cls = TRAINER_REGISTRY[model_cfg["name"]]
-
-        trainer = trainer_cls(
-            model=model,
-            cfg=model_cfg["training"],
-            checkpoint_dir=self.logger.checkpoint_dir(),
-        )
-
-        trainer.fit(
-            X_train,
-            y_train,
-            X_val,
-            y_val,
-            ckpt_path=str(checkpoint_path),
-        )
-
-        # IMPORTANT:
-        # NNTrainer.fit() must transfer the restored LightningModule
-        # weights back to `model` before returning, if the Lightning
-        # module and `model` are separate objects.
-
-        # ---------------------------------------------------------
-        # 6. Score validation data and fit thresholding
-        # ---------------------------------------------------------
-        scores = model.score(X_val)
-
-        thresholding_cfg = model_cfg.get("thresholding")
-
-        if thresholding_cfg:
-            thresholding = Thresholding(thresholding_cfg)
-            thresholding.fit(
-                scores=scores,
-                y_val=y_val,
-            )
-            threshold = thresholding.get_threshold()
-
-            threshold_path = self.logger.artifact_path(
-                "thresholding/thresholding.pkl"
-            )
-            thresholding.save(threshold_path)
-        else:
-            thresholding = None
-            threshold = None
-
-        # ---------------------------------------------------------
-        # 7. Evaluate and log metrics
-        # ---------------------------------------------------------
-        predictions = model.predict(
-            X_val,
-            threshold=threshold,
-        )
-
-        metrics = evaluator.evaluate(
-            scores=scores,
-            y_true=y_val,
-            predictions=predictions,
-        )
-
-        self.logger.log_metrics(metrics)
-
-        # ---------------------------------------------------------
-        # 8. Log training history and diagnostics
-        # ---------------------------------------------------------
-        history = trainer.history
-
-        if history is not None:
-            self.logger.log_training_history(history)
-
-        diagnostics = collect_diagnostics(
-            y_true=y_val,
-            scores=scores,
-            predictions=predictions,
-            history=history,
-        )
-
-        self.logger.log_diagnostics(diagnostics)
-        self.logger.log_candidate_model(
-            model,
-            metrics,
-            model_cfg["name"],
-        )
-
-        self.logger.log_tags({"status": "finished"})
-        run_status = "FINISHED"
-
-        return {
-            "prep": prep,
-            "model":
-"""
 
 
 

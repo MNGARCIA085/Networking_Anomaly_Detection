@@ -1,0 +1,12 @@
+{
+  "experiment": {
+    "type": "ae"
+  },
+  "model": {
+    "params": "{'encoder_dims': [97, 55, 25], 'decoder_dims': [30, 113]}"
+  },
+  "data": "{'train_path': 'data/arriba.csv', 'val_path': 'data/arriba.csv', 'y_val_path': 'data/arriba.csv', 'test_path': 'data/arriba.csv', 'y_test_path': 'data/arriba.csv', 'windowing': {'enabled': True, 'size': 10, 'stride': 1}}",
+  "preprocessing": "{'pointwise': {'imputation': {'enabled': True, 'name': 'simple', 'params': {'strategy': 'mean'}}, 'scaler': {'enabled': True, 'name': 'standard', 'params': {}}, 'transform': {'enabled': True, 'name': 'power', 'params': {'method': 'yeo-johnson', 'standardize': True}}}, 'windowing': {'size': 3, 'stride': 1}, 'temporal_prep': {'delta': {'enable': False, 'name': 'delta', 'params': {'order': 1}}, 'rolling': {'enabled': False, 'name': 'rolling_stats', 'params': {'window': 5}}}}",
+  "thresholding": "{'name': 'constrained_f1', 'params': {'min_recall': 0.75}}",
+  "training": "{'batch_size': 32, 'epochs': 2, 'type': 'default', 'optimizer': {'name': 'adam', 'params': {'lr': 0.0003289192670814273, 'betas': [0.9, 0.999]}}, 'loss': {'name': 'mse'}, 'callbacks': [{'name': 'print_loss', 'params': {}}, {'name': 'early_stopping', 'params': {'patience': 7}}], 'num_workers': 1}"
+}

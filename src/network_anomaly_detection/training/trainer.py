@@ -1,9 +1,8 @@
-
 import lightning.pytorch as pl
 from torch.utils.data import DataLoader
 
 from network_anomaly_detection.training.nn.dataset import AnomalyDataset
-
+from network_anomaly_detection.training.nn.callbacks import TrainingHistoryCallback
 
 
 class AnomalyLightningModule(pl.LightningModule):
@@ -50,11 +49,6 @@ class AnomalyLightningModule(pl.LightningModule):
     def configure_optimizers(self):
         return self.optimizer
 
-
-
-
-
-from network_anomaly_detection.training.nn.callbacks import TrainingHistoryCallback
 
 
 
@@ -115,7 +109,6 @@ class NNTrainer:
         )
 
         self.lightning_trainer = trainer
-        #self.history = trainer.callback_metrics
         self.history = next(
             (
                 cb.history

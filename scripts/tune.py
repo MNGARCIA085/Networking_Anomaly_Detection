@@ -20,15 +20,6 @@ def main(cfg: DictConfig):
     # Data
     # --------------------------------------------------
 
-
-    """
-    data = DataModule(
-        "data/arriba.csv",
-        "data/arriba.csv",
-    )
-    """
-    
-
     """
     data = DataModule(
         "data/data.csv",
@@ -118,7 +109,7 @@ def main(cfg: DictConfig):
     print(best_cfg)
 
 
-    print('training with best confgi')
+    print('Training with best config')
 
 
 
@@ -138,21 +129,8 @@ def main(cfg: DictConfig):
         y_train=y_train,
         X_val=X_val,
         y_val=y_val,
-        run_name=f"{cfg.model_type.name}_baseline",
+        run_name=f"{cfg.model_type.name}_tunned",
     )
-
-
-    """
-    exp = Experiment(
-        model_type=model_type,
-        evaluator=Evaluator(),
-        logger=MLFlowLogger(
-            tracking_db=to_absolute_path(cfg.paths.mlflow_db),
-            artifact_dir=to_absolute_path(cfg.paths.mlflow_artifacts),
-        ),
-    )
-    """
-
 
 
 

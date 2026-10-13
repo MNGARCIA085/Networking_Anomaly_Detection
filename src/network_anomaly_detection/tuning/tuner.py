@@ -76,6 +76,11 @@ class Tuner:
                 X_val=X_val,
                 y_val=y_val,
                 run_name=f"trial_{trial.number}",
+                metadata={
+                    "run_type": "tuning_trial",
+                    "trial_number": str(trial.number),
+                    "tuning_metric": metric,
+                },
             )
 
             # --------------------------------------------------

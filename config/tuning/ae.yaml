@@ -49,42 +49,20 @@ prep:
     names: [standard, minmax]
 
 
-  
-
 
 model_space:
   encoder_dims:
-    - name: enc1
-      type: int
-      low: 32
-      high: 128
-      step: 16
-
-    - name: enc2
-      type: int
-      low: 8
-      high: 64
-      step: 8
-
-    - name: enc3
-      type: int
-      low: 4
-      high: 32
-      step: 4
+    choices:
+      - [128, 64, 16]
+      - [128, 32, 8]
+      - [64, 32, 8]
+      - [64, 16, 4]
 
   decoder_dims:
-    - name: dec1
-      type: int
-      low: 8
-      high: 64
-      step: 8
-
-    - name: dec2
-      type: int
-      low: 32
-      high: 128
-      step: 16
-
+    choices:
+      - [16, 64]
+      - [8, 32]
+      - [8, 32, 64]
 
 
 training_space:
@@ -131,8 +109,8 @@ training_space:
   epochs:
     name: epochs
     type: int
-    low: 20
-    high: 40
+    low: 2
+    high: 4
 
   batch_size:
     name: batch_size

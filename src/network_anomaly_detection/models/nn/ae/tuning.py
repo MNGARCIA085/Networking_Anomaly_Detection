@@ -18,30 +18,56 @@ from network_anomaly_detection.tuning.samplers import (
 # Model dimensions (model specific)
 # ============================================================
 
-def sample_dimensions(trial, cfg):
 
-    encoder_dims = [
-        trial.suggest_int(
-            param["name"],
-            param["low"],
-            param["high"],
-        )
-        for param in cfg["encoder_dims"]
-    ]
+def sample_dimensionsv0(trial, cfg):
+    """ only enforces powers of 2; not architecture"""
+    def sample_layer(param):
+        if param["type"] == "categorical":
+            return trial.suggest_categorical(
+                param["name"],
+                param["choices"],
+            )
 
-    decoder_dims = [
-        trial.suggest_int(
-            param["name"],
-            param["low"],
-            param["high"],
+        if param["type"] == "int":
+            return trial.suggest_int(
+                param["name"],
+                param["low"],
+                param["high"],
+                step=param.get("step", 1),
+            )
+
+        raise ValueError(
+            f"Unsupported parameter type: {param['type']}"
         )
-        for param in cfg["decoder_dims"]
-    ]
 
     return {
-        "encoder_dims": encoder_dims,
-        "decoder_dims": decoder_dims,
+        "encoder_dims": [
+            sample_layer(p) for p in cfg["encoder_dims"]
+        ],
+        "decoder_dims": [
+            sample_layer(p) for p in cfg["decoder_dims"]
+        ],
     }
+
+
+
+def sample_dimensions(trial, cfg):
+    encoder_dims = trial.suggest_categorical(
+        "encoder_dims",
+        [tuple(dims) for dims in cfg["encoder_dims"]["choices"]],
+    )
+
+    decoder_dims = trial.suggest_categorical(
+        "decoder_dims",
+        [tuple(dims) for dims in cfg["decoder_dims"]["choices"]],
+    )
+
+    return {
+        "encoder_dims": list(encoder_dims),
+        "decoder_dims": list(decoder_dims),
+    }
+
+
 
 
 # ============================================================

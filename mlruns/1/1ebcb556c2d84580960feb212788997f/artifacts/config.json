@@ -1,0 +1,12 @@
+{
+  "experiment": {
+    "type": "ae"
+  },
+  "model": {
+    "params": "{'encoder_dims': [128, 32, 8], 'decoder_dims': [8, 32, 64]}"
+  },
+  "data": "{'train_path': 'data/arriba.csv', 'val_path': 'data/arriba.csv', 'y_val_path': 'data/arriba.csv', 'test_path': 'data/arriba.csv', 'y_test_path': 'data/arriba.csv', 'windowing': {'enabled': True, 'size': 20, 'stride': 1}}",
+  "preprocessing": "{'pointwise': {'imputation': {'enabled': True, 'name': 'simple', 'params': {'strategy': 'mean'}}, 'scaler': {'enabled': True, 'name': 'minmax', 'params': {}}, 'transform': {'enabled': True, 'name': 'power', 'params': {'method': 'yeo-johnson', 'standardize': False}}}, 'windowing': {'size': 3, 'stride': 1}, 'temporal_prep': {'delta': {'enable': False, 'name': 'delta', 'params': {'order': 1}}, 'rolling': {'enabled': False, 'name': 'rolling_stats', 'params': {'window': 5}}}}",
+  "thresholding": "{'name': 'constrained_f1', 'params': {'min_recall': 0.75}}",
+  "training": "{'batch_size': 32, 'epochs': 2, 'type': 'default', 'optimizer': {'name': 'sgd', 'params': {'lr': 0.030298573979599255, 'momentum': 0.7293574208038021, 'weight_decay': 0.0006902201779686257}}, 'loss': {'name': 'mse'}, 'callbacks': [{'name': 'print_loss', 'params': {}}, {'name': 'early_stopping', 'params': {'patience': 9}}], 'num_workers': 1}"
+}
