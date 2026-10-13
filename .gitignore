@@ -216,3 +216,24 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Hydra outputs
+outputs/
+multirun/
+.hydra/
+
+# PyTorch Lightning logs
+lightning_logs/
+
+
+# Model checkpoints
+*.ckpt
+*.pt
+
+# MLflow
+mlruns/
+mlflow.db
+mlartifacts/
+mlflow.db-shm
+mlflow.db-wal
