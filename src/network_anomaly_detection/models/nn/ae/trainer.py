@@ -34,6 +34,7 @@ class AETrainer(NNTrainer):
             batch_size=cfg["batch_size"],
             optimizer=optimizer,
             loss=loss,
+            scheduler=cfg.get("scheduler"),
             callbacks=callbacks,
             num_workers=cfg.get("num_workers", 0),
         )

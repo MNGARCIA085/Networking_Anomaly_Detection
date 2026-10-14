@@ -42,6 +42,8 @@ class TrainingConfig:
     optimizer: OptimizerConfig
     loss: nn.Module | None
 
+    scheduler: Any | None
+
     batch_size: int
     epochs: int
 

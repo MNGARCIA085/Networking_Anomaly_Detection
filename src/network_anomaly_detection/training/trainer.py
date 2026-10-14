@@ -5,14 +5,19 @@ from network_anomaly_detection.training.nn.dataset import AnomalyDataset
 from network_anomaly_detection.training.nn.callbacks import TrainingHistoryCallback
 
 
+from  network_anomaly_detection.training.nn.schedulers import create_scheduler
+
+
+
 class AnomalyLightningModule(pl.LightningModule):
 
-    def __init__(self, model, optimizer, criterion):
+    def __init__(self, model, optimizer, criterion, scheduler_cfg=None):
         super().__init__()
 
         self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
+        self.scheduler_cfg = scheduler_cfg
 
     def _compute_loss(self, batch):
         X, y = batch
@@ -46,8 +51,57 @@ class AnomalyLightningModule(pl.LightningModule):
 
         return loss
 
+    #def configure_optimizers(self):
+    #    return self.optimizer
+
+
     def configure_optimizers(self):
+        scheduler_config = create_scheduler(
+            self.scheduler_cfg,
+            self.optimizer,
+        )
+
+        if scheduler_config is None:
+            return self.optimizer
+
+        return {
+            "optimizer": self.optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler_config["scheduler"],
+                "monitor": scheduler_config["monitor"],
+                "interval": scheduler_config["interval"],
+                "frequency": scheduler_config["frequency"],
+            },
+        }
+
+
+
+
+"""
+def configure_optimizers(self):
+    cfg = self.scheduler_cfg
+
+    if cfg is None:
         return self.optimizer
+
+    scheduler = create_scheduler(cfg, self.optimizer)
+
+    scheduler_config = {
+        "scheduler": scheduler,
+        "interval": cfg.get("interval", "epoch"),
+        "frequency": cfg.get("frequency", 1),
+    }
+
+    if cfg["name"] == "reduce_on_plateau":
+        scheduler_config["monitor"] = cfg.get(
+            "monitor", "val_loss"
+        )
+
+    return {
+        "optimizer": self.optimizer,
+        "lr_scheduler": scheduler_config,
+    }
+"""
 
 
 
@@ -65,6 +119,7 @@ class NNTrainer:
             model=model,
             optimizer=cfg.optimizer,
             criterion=cfg.loss,
+            scheduler_cfg=cfg.scheduler,
         )
 
     def build_dataloader(self, X, y=None, shuffle=False):

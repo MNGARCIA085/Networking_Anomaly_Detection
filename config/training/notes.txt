@@ -1,0 +1,50 @@
+Set scheduler: null to disable scheduling.
+
+
+predefined step scheduler
+
+scheduler:
+  name: step_lr
+  interval: epoch
+  params:
+    step_size: 10
+    gamma: 0.5
+
+
+
+
+cosine annealing
+
+scheduler:
+  name: cosine_annealing
+  interval: epoch
+  params:
+    T_max: 50
+    eta_min: 0.000001
+
+
+
+reduce lr on plateau
+
+scheduler:
+  name: reduce_on_plateau
+  monitor: val_loss
+  interval: epoch
+  frequency: 1
+  params:
+    mode: min
+    factor: 0.5
+    patience: 5
+    min_lr: 0.000001
+
+
+
+
+
+
+Strategy  Typical use Recommendation for your AE
+No scheduler  Baseline, short training  Essential baseline
+ReduceLROnPlateau Adapt to validation stagnation  Good first experiment
+StepLR  Predictable periodic decay  Useful comparison
+CosineAnnealingLR Smooth decay over a known training horizon  Good alternative
+Both ReduceLROnPlateau and StepLR Two schedules competing to modify the
