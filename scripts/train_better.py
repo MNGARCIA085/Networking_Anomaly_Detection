@@ -51,9 +51,10 @@ def main(cfg: DictConfig):
 
     # AEs fit with normal data
     # AE training: retain only benign samples
-    mask = y_train == 0
-    X_train = X_train.loc[mask]
-    y_train = y_train.loc[mask]
+    # https://chatgpt.com/c/6acff1a6-c8a0-83e8-b5af-40b02b4b2a6f
+    #mask = y_train == 0
+    #X_train = X_train.loc[mask]
+    #y_train = y_train.loc[mask]
 
     #print("Train labels:", y_train.value_counts().to_dict())
     #print("Validation labels:", y_val.value_counts().to_dict())
@@ -71,6 +72,11 @@ def main(cfg: DictConfig):
     prep = prep_cls(
         cfg.model_type,
     )
+
+
+    # Prep handles model-specific sample selection
+    # For ex, AEs are trained only with normal data
+    X_train, y_train = prep.select_training_data(X_train, y_train)
 
     # Fit preprocessing ONLY on training data.
     prep.fit(

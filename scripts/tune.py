@@ -35,9 +35,9 @@ def main(cfg: DictConfig):
     X_train, y_train, X_val, y_val = data.load()
 
     # only AEs...
-    mask = y_train == 0
-    X_train = X_train.loc[mask]
-    y_train = y_train.loc[mask]
+    #mask = y_train == 0
+    #X_train = X_train.loc[mask]
+    #y_train = y_train.loc[mask]
 
     # --------------------------------------------------
     # Preprocessing
@@ -50,6 +50,9 @@ def main(cfg: DictConfig):
     prep = prep_cls(
         cfg.model_type,
     )
+
+    X_train, y_train = prep.select_training_data(X_train, y_train)
+
 
     # Fit preprocessing ONLY on training data.
     prep.fit(

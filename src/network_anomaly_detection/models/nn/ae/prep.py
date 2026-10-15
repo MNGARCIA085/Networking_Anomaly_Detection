@@ -52,3 +52,12 @@ class AEPrep(BasePrep):
         return PreprocessingPipeline(steps)
     
 
+
+    # select only normal data
+    def select_training_data(self, X_train, y_train):
+        mask = y_train == 0
+        X_train = X_train.loc[mask]
+        y_train = y_train.loc[mask]
+
+        return X_train, y_train
+

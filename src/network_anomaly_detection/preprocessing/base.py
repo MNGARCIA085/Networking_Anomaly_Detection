@@ -115,6 +115,16 @@ class BasePrep(ABC):
 
         return X, y
 
+
+
+
+    # def. behavior, all data, then , for ex AEs will be trained ONLY with normal data
+    def select_training_data(self, X_train, y_train):
+        return X_train, y_train
+
+
+
+
     # --------------------------------------------------
     # CONVENIENCE METHOD
     # --------------------------------------------------
