@@ -1,160 +1,68 @@
-# data/data_module.py
-
 from pathlib import Path
-
 import pandas as pd
 
 
-class DataModule:
 
+
+class DataModule:
     def __init__(
         self,
-        train_path: str | Path,
-        val_path: str | Path,
+        train_path: str | Path | None = None,
+        val_path: str | Path | None = None,
+        test_path: str | Path | None = None,
+        label_column: str = "Label",
     ):
-        self.train_path = Path(train_path)
-        self.val_path = Path(val_path)
+        self.paths = {
+            "train": Path(train_path) if train_path is not None else None,
+            "val": Path(val_path) if val_path is not None else None,
+            "test": Path(test_path) if test_path is not None else None,
+        }
+        self.label_column = label_column
 
+    def load_split(self, split: str):
+        if split not in self.paths:
+            raise ValueError(f"Unknown split: {split!r}")
 
-    def load(self):
-        train = pd.read_csv(self.train_path)
-        val = pd.read_csv(self.val_path)
+        path = self.paths[split]
 
-        X_train, y_train = self._split_features_labels(train)
-        X_val, y_val = self._split_features_labels(val)
+        if path is None:
+            raise ValueError(f"No path configured for split {split!r}")
 
+        if not path.is_file():
+            raise FileNotFoundError(f"Dataset not found: {path}")
 
-        return (
-            X_train,
-            y_train,
-            X_val,
-            y_val,
-        )
+        df = pd.read_csv(path)
+        return self._split_features_labels(df)
 
-    # load test in other method...
+    def load_train_val(self):
+        X_train, y_train = self.load_split("train")
+        X_val, y_val = self.load_split("val")
+        return X_train, y_train, X_val, y_val
 
+    def _split_features_labels(self, df: pd.DataFrame):
+        if not df.columns.is_unique:
+            raise ValueError("Dataset contains duplicate columns.")
 
+        if self.label_column not in df.columns:
+            raise ValueError(
+                f"Target column {self.label_column!r} not found."
+            )
 
+        X = df.drop(columns=[self.label_column])
+        y = df[self.label_column]
 
-
-    @staticmethod
-    def _split_features_labels(df: pd.DataFrame):
-
-        import numpy as np
-
-        # Quick cleaning / subset for testing
-        df = (
-            df.replace([np.inf, -np.inf], np.nan)
-              .dropna()
-              #.head(7000)
-        )
-
-
-        #print(df.keys())
-
-        df.columns = df.columns.str.strip()
-
-        X = df.drop(columns=["Label"])
-
-        labels = df["Label"].astype(str).str.strip().str.upper()
-
-        # Binary anomaly target:
-        # BENIGN = normal (0), everything else = anomaly (1)
-        y = (labels != "BENIGN").astype(int)
-
-
-        # aes only with normal data; but only train, NOT filter val!!!!
-        """
-        mask = y == 0
-        X = X.loc[mask]
-        y = y.loc[mask]
-        """
-
-        return X, y
-
-
-    # reconstructive models -> trained on mostly ormal data
-    def _split_features_labelsbbbb(df: pd.DataFrame, train_ae=True):
-        import numpy as np
-
-        # Cleaning / subset for testing
-        df = (
-            df.replace([np.inf, -np.inf], np.nan)
-              .dropna()
-              .copy()
-        )
-
-        df.columns = df.columns.str.strip()
-        df = df.head(5000)  # Temporary subset for testing
-
-        labels = df["Label"].astype(str).str.strip().str.upper()
-        X = df.drop(columns=["Label"])
-        y = (labels != "BENIGN").astype(int)
-
-        # AE training: normal traffic only
-        if train_ae:
-            mask = y == 0
-            X = X.loc[mask]
-            y = y.loc[mask]
+        if X.empty:
+            raise ValueError("Dataset contains no feature columns.")
 
         return X, y
 
 
 
-    @staticmethod
-    def _split_features_labelsv0(df: pd.DataFrame):
-
-        import numpy as np
-        from sklearn.preprocessing import LabelEncoder
-
-        # Quick cleaning / subset for testing
-        df = (
-            df.replace([np.inf, -np.inf], np.nan)
-              .dropna()
-              .head(500)
-        )
-
-        df.columns = df.columns.str.strip()
-
-        X = df.drop(columns=["Label"])
-        y = df["Label"]
-
-        # Quick label encoding
-        y = LabelEncoder().fit_transform(y)
-
-        return X, y
-
-
-    """
-    encoder = LabelEncoder()
-    y = encoder.fit_transform(df["Label"])
-
-    print(dict(zip(encoder.classes_, encoder.transform(encoder.classes_))))
-    """
+"""
+One deliberate choice: I haven't added missing-value rejection here. Your prep pipeline 
+should own the strategy for handling missing features, while the DataModule simply loads 
+and separates the data.
+"""
 
 
 
-
-
-    """
-    def _split_features_labels(df: pd.DataFrame):
-
-
-        # slicing
-
-
-        #print(df.keys())
-        # quick cleabnign for niw
-        import numpy as np
-        df = df.replace([np.inf, -np.inf], np.nan).dropna().head(3000) # take only 1000
-
-        # 
-
-        y = df["Label"] # corect later!!!!!!
-        #X = df.drop(columns=[" Label"])
-        X = df.drop(columns=["Label"])
-
-
-
-        return X, y
-    """

@@ -1,3 +1,12 @@
+raw_path: data/raw/data.csv
+processed_dir: data/processed/v1
+label_column: Label
+split:
+  train_size: 0.70
+  val_size: 0.15
+  test_size: 0.15
+
+
 train_path: data/arriba.csv
 val_path: data/arriba.csv
 y_val_path: data/arriba.csv

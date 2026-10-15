@@ -7,6 +7,7 @@ from network_anomaly_detection.preprocessing.components.pointwise.dimensionality
 from network_anomaly_detection.preprocessing.components.pointwise.feature_selection import create_feature_selector
 from network_anomaly_detection.preprocessing.components.pointwise.transforms import create_transform
 from network_anomaly_detection.preprocessing.components.pointwise.scalers import create_scaler
+from network_anomaly_detection.preprocessing.components.pointwise.imputation import create_imputer
 
 
 
@@ -20,6 +21,19 @@ class IsoPrep(BasePrep):
             return None
 
         steps = []
+
+
+        # Imputer
+        imputer_cfg = cfg.get("imputation", {})
+
+        if imputer_cfg.get("enabled", False):
+            imputer = create_imputer(
+                imputer_cfg["name"],
+                **imputer_cfg.get("params", {}),
+            )
+            steps.append(imputer)
+
+        
 
         # Feature Selection
         feat_sel_cfg = cfg.get("feature_selection")

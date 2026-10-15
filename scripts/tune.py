@@ -26,13 +26,22 @@ def main(cfg: DictConfig):
         "data/data.csv",
     )
     """
-    data = DataModule(
-        "data/X_train.csv",
-        "data/X_test.csv",
-    )
+    #data = DataModule(
+    #    "data/X_train.csv",
+    #    "data/X_test.csv",
+    #)
+    #X_train, y_train, X_val, y_val = data.load()
 
 
-    X_train, y_train, X_val, y_val = data.load()
+
+    data_module = DataModule(
+                train_path = "data/processed/v1/train.csv",
+                val_path = "data/processed/v1/val.csv",
+            )
+
+
+    X_train, y_train, X_val, y_val = data_module.load_train_val()
+
 
     # only AEs...
     #mask = y_train == 0
