@@ -1,37 +1,29 @@
 from pathlib import Path
 import numpy as np
-
-from network_anomaly_detection.data.data_module import DataModule    
-from network_anomaly_detection.infra.selection.candidate_registry import CandidateRegistry
-from network_anomaly_detection.infra.selection.model_selector import ModelSelector
-from network_anomaly_detection.inference.benchmarking import benchmark_candidates
-
+import random
 import hydra
 from omegaconf import DictConfig
 from hydra.utils import to_absolute_path
 
+from network_anomaly_detection.data.data_module import DataModule    
+from network_anomaly_detection.infra.selection.candidate_registry import CandidateRegistry
+from network_anomaly_detection.infra.selection.model_selector import ModelSelector
+from network_anomaly_detection.evaluation.evaluator import Evaluator
 from network_anomaly_detection.inference.mlflow_loader import load_from_mlflow
 
-from network_anomaly_detection.evaluation.evaluator import Evaluator
 
 
 
 @hydra.main(config_path="../config", config_name="config", version_base=None)
 def main(cfg):
+    """ Select best model and evaluate with test data"""
 
     # load test data
-    #X_test = np.load(to_absolute_path(cfg.data.test_path))
-    #y_test = np.load(to_absolute_path(cfg.data.y_test_path))
+    data_module = DataModule(
+                test_path = "data/processed/v1/test.csv",
+            )
 
-    data = DataModule(
-        "data/data.csv",
-        "data/data.csv",
-    )
-    
-    _, _, X_test, y_test = data.load()
-
-
-    print(len(X_test))
+    X_test, y_test = data_module.load_split("test")
 
 
     # select best model (first in my tbale, i should add a rank column)
@@ -82,8 +74,6 @@ def main(cfg):
     print(scores.shape)
     print(X_test.shape)
     print(y_test.shape)
-
-
     print(runner.prep.windowing.seq_len)
 
 
@@ -105,7 +95,6 @@ def main(cfg):
 
 
     # inference
-    import random
     X = np.random.randn(20, 78)
 
     predictions = runner.predict(X)

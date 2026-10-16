@@ -109,8 +109,8 @@ training_space:
   epochs:
     name: epochs
     type: int
-    low: 2
-    high: 4
+    low: 1
+    high: 3
 
   batch_size:
     name: batch_size

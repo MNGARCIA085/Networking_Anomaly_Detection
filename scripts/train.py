@@ -5,7 +5,6 @@ from omegaconf import DictConfig
 from network_anomaly_detection.data.data_module import DataModule
 from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
-
 from network_anomaly_detection.experiment.experiment import Experiment
 
 

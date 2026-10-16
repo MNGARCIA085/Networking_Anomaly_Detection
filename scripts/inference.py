@@ -1,10 +1,11 @@
+import json
+import pandas as pd
 import numpy as np
-
 from pathlib import Path
 
+from network_anomaly_detection.data.data_module import DataModule
 from network_anomaly_detection.inference.loader import load_from_config
 
-import json
 
 
 def main():
@@ -18,7 +19,7 @@ def main():
       "model": {
         "type": "ae",
         "version": "v1",
-        "window_size": 10
+        "window_size": 1
       }
     }  
 
@@ -41,19 +42,15 @@ def main():
 
 
     #------------
-    from network_anomaly_detection.data.data_module import DataModule
-    data = DataModule(
-        "data/data.csv",
-        "data/data.csv",
-    )
+    data_module = DataModule(
+                train_path = "data/processed/v1/train.csv",
+                val_path = "data/processed/v1/val.csv",
+            )
 
-    X_train, y_train, X_val, y_val = data.load()
+    X_train, X_val, X_val, y_val = data_module.load_train_val()
 
     feature_columns = X_train.columns
 
-
-
-    import pandas as pd 
     X = pd.DataFrame(
         np.random.randn(20, 78),
         columns=feature_columns,
@@ -63,28 +60,14 @@ def main():
     print(predictions)
 
 
-
     # more realistic preds
+    scores = runner.score(X_val)
     pred = runner.predict(X_val)
     print(pred)
 
 
-
-    # checks
-    scores_direct = model.score(model.adapt_input(prep.transform(X_val)))
-    scores_runner = runner.score(X_val)
-
-
-
-    #
-    
-
-    print("Direct:", scores_direct[:10])
-    print("Runner:", scores_runner[:10])
-    print("Max difference:", np.max(np.abs(scores_direct - scores_runner)))
-
     print("Threshold:", runner.thresholding.get_threshold())
-    print("Validation score range:", scores_direct.min(), scores_direct.max())
+    print("Validation score range:", scores.min(), scores.max())
     print("Predictions:", np.unique(runner.predict(X_val), return_counts=True))
 
 

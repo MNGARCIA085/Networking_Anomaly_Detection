@@ -1,14 +1,12 @@
 import hydra
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
+from pathlib import Path
 
 from network_anomaly_detection.data.data_module import DataModule
 from network_anomaly_detection.infra.selection.candidate_registry import CandidateRegistry
 from network_anomaly_detection.infra.selection.model_selector import ModelSelector
-from pathlib import Path
 from network_anomaly_detection.inference.benchmarking import benchmark_candidates
-
-
 
 
 
@@ -16,22 +14,14 @@ from network_anomaly_detection.inference.benchmarking import benchmark_candidate
 def main(cfg):
 
 
-    # load data
-    """
-    data = DataModule(
-        to_absolute_path(cfg.data.train_path),
-        to_absolute_path(cfg.data.val_path),
-        to_absolute_path(cfg.data.y_val_path),
-    )
-    X_train, X_val, y_val = data.load()
-    """
+    # Load data
 
-    data = DataModule(
-        "data/data.csv",
-        "data/data.csv",
-    )
-    
-    _, _, X_val, y_val = data.load()
+    data_module = DataModule(
+                train_path = "data/processed/v1/train.csv",
+                val_path = "data/processed/v1/val.csv",
+            )
+
+    _, _, X_val, y_val = data_module.load_train_val()
 
 
     root_dir = Path(to_absolute_path(cfg.paths.root_dir))
@@ -52,7 +42,6 @@ def main(cfg):
     selector = ModelSelector(
         registry
     )
-
 
 
     #------------------
@@ -78,9 +67,6 @@ def main(cfg):
     #--------
     aux = registry.candidate_records(experiment_id=1)
     print(aux)
-
-
-
 
 
 

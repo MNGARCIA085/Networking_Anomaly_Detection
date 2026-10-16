@@ -34,10 +34,12 @@ class DataModule:
         df = pd.read_csv(path)
         return self._split_features_labels(df)
 
+
     def load_train_val(self):
         X_train, y_train = self.load_split("train")
         X_val, y_val = self.load_split("val")
         return X_train, y_train, X_val, y_val
+
 
     def _split_features_labels(self, df: pd.DataFrame):
         if not df.columns.is_unique:

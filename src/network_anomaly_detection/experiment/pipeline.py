@@ -238,6 +238,11 @@ class ExperimentPipeline:
             # ---------------------------------------------------------
             # 3. Apply the fitted preprocessing
             # ---------------------------------------------------------
+
+            # only normal data for AEs
+            X_train, y_train = prep.select_training_data(X_train, y_train)
+
+
             X_train, y_train = prep.transform_with_labels(
                 X_train, y_train
             )
