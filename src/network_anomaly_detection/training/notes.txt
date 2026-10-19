@@ -84,3 +84,17 @@ BaseTrainer: minimal common contract, mainly fit(...).
 NNTrainer: generic NN machinery — dataloaders, epochs, validation, optimizer, callbacks, etc.
 AETrainer: only AE-specific behavior/configuration.
 IsoForestTrainer: independent of NNTrainer, but still satisfies BaseTrainer.
+
+
+########################################
+########################################
+########################################
+
+
+data for aes....
+
+| Data | Purpose | Samples |
+|---|---|---|
+| Training | Learn normal patterns | Normal only |
+| Validation for early stopping | Monitor reconstruction loss | Normal only |
+| Validation for model evaluation and threshold selection | Evaluate anomaly detection | Normal + anomalous |

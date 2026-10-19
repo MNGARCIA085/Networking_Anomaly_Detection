@@ -1,0 +1,102 @@
+
+Core idea: the AE learns a compressed representation of normal traffic; Isolation Forest detects anomalies in that latent space.
+
+
+
+
+Normal-only training data
+          |
+          v
+    Preprocessing
+          |
+          v
+  model.adapt_input()
+          |
+          v
+ AEIsolationForestTrainer.fit()
+          |
+          +----> AETrainer.fit()
+          |           |
+          |           v
+          |      Trained AE
+          |           |
+          v           v
+       Encode normal training samples
+                  |
+                  v
+           Isolation Forest.fit()
+                  |
+                  v
+       Score validation latent vectors
+                  |
+                  v
+        Threshold selection and evaluation
+
+
+
+
+
+
+              Training data (normal samples)
+                         |
+                         v
+                +----------------+
+                | Preprocessing  |
+                +----------------+
+                         |
+                         v
+                +----------------+
+                | Autoencoder    |
+                |   (training)   |
+                +----------------+
+                         |
+                         v
+                +----------------+
+                | Encoder        |
+                | Latent vectors |
+                +----------------+
+                         |
+                         v
+                +----------------+
+                | Isolation      |
+                | Forest (fit)   |
+                +----------------+
+
+
+              Inference / scoring
+                         |
+                         v
+                +----------------+
+                | Preprocessing  |
+                +----------------+
+                         |
+                         v
+                +----------------+
+                | Trained AE     |
+                | Encoder        |
+                +----------------+
+                         |
+                         v
+                +----------------+
+                | Latent vectors |
+                +----------------+
+                         |
+                         v
+                +----------------+
+                | Trained        |
+                | Isolation      |
+                | Forest         |
+                +----------------+
+                         |
+                         v
+                +----------------+
+                | Anomaly score  |
+                +----------------+
+                         |
+                         v
+                +----------------+
+                | Thresholding   |
+                +----------------+
+                         |
+                         v
+                Normal / Anomaly

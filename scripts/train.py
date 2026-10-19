@@ -1,11 +1,15 @@
+import pandas as pd
+
 import hydra
 from hydra.utils import to_absolute_path
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from network_anomaly_detection.data.data_module import DataModule
 from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
 from network_anomaly_detection.experiment.experiment import Experiment
+
+from network_anomaly_detection.evaluation.evaluator import Evaluator
 
 
 
@@ -32,10 +36,6 @@ def main(cfg: DictConfig):
     X_train, y_train, X_val, y_val = data_module.load_train_val()
 
 
-    print(X_train.shape)
-    print(X_val.shape)
-
-    import pandas as pd
 
     for name, y in [("Train", y_train), ("Validation", y_val)]:
         proportions = y.value_counts(normalize=True).sort_index()
@@ -75,7 +75,7 @@ def main(cfg: DictConfig):
 
     # Prep handles model-specific sample selection
     # For ex, AEs are trained only with normal data
-    X_train, y_train = prep.select_training_data(X_train, y_train)
+    X_train, y_train = prep.select_training_data(X_train, y_train) # select normal samples
 
     # Fit preprocessing ONLY on training data.
     prep.fit(
@@ -86,19 +86,14 @@ def main(cfg: DictConfig):
     # --------------------------------------------------
     # Experiment
     # --------------------------------------------------
-
-    
-    #logger = MLFlowLogger()
+ 
     logger = MLFlowLogger(
         tracking_db=to_absolute_path(cfg.paths.mlflow_db),
         artifact_dir=to_absolute_path(cfg.paths.mlflow_artifacts),
     )
 
 
-
-    #print(type(cfg))
-    from omegaconf import OmegaConf
-
+    # 
     cfg = OmegaConf.to_container(cfg, resolve=True)
 
 
@@ -108,14 +103,7 @@ def main(cfg: DictConfig):
     )
 
 
-    from network_anomaly_detection.evaluation.evaluator import Evaluator
-
     evaluator = Evaluator()
-
-
-
-    print(len(X_train))
-
 
     result = experiment.run(
         prep=prep, # already fit

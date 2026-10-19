@@ -143,6 +143,14 @@ class ExperimentPipeline:
         X_val, y_val = prep.transform_with_labels(X_val, y_val)
         self.logger.save_prep(prep)
 
+
+        # Keep the full validation set; derive a separate subset for training callbacks.
+        # for ex, for aes for early stopping i want val with only normal data
+        # val_loss should be the metric for the callbacks
+        X_val_train, y_val_train = prep.select_training_data(X_val, y_val)
+
+
+
         # Model
         model = build_model(
             cfg=model_cfg,
@@ -151,13 +159,16 @@ class ExperimentPipeline:
         X_train = model.adapt_input(X_train)
         X_val = model.adapt_input(X_val)
 
+
+        X_val_train = model.adapt_input(X_val_train) # new!!!
+
         # Trainer; the trainer owns the framework-specific training details.
         trainer = build_trainer(
             model=model,
             cfg=model_cfg,
             checkpoint_dir=self.logger.checkpoint_dir(),
         )
-        trainer.fit(X_train, y_train, X_val, y_val)
+        trainer.fit(X_train, y_train, X_val_train, y_val_train)
 
         # Evaluation
         evaluation = self._evaluate(
@@ -273,6 +284,11 @@ class ExperimentPipeline:
             X_train, y_train = prep.transform_with_labels(X_train, y_train)
             X_val, y_val = prep.transform_with_labels(X_val, y_val)
 
+
+            X_val_train, y_val_train = prep.select_training_data(X_val, y_val)
+
+
+
             # ---------------------------------------------------------
             # 4. Reconstruct the model and adapt its input
             # ---------------------------------------------------------
@@ -283,6 +299,8 @@ class ExperimentPipeline:
 
             X_train = model.adapt_input(X_train)
             X_val = model.adapt_input(X_val)
+
+            X_val_train = model.adapt_input(X_val_train) # new!!
 
             # ---------------------------------------------------------
             # 5. Resume Lightning training
@@ -296,8 +314,8 @@ class ExperimentPipeline:
             trainer.fit(
                 X_train,
                 y_train,
-                X_val,
-                y_val,
+                X_val_train,
+                y_val_train,
                 ckpt_path=str(checkpoint_path),
             )
 
