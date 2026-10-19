@@ -128,8 +128,8 @@ class ExperimentPipeline:
         self.logger.log_params({
             "model": model_cfg["name"],
             "random_state": cfg["random_state"],
-            "window_size": model_cfg["data"]["windowing"]["size"],
-            "window_stride": model_cfg["data"]["windowing"]["stride"],
+            "window_size": model_cfg["prep"]["windowing"]["size"],
+            "window_stride": model_cfg["prep"]["windowing"]["stride"],
         })
 
         # config

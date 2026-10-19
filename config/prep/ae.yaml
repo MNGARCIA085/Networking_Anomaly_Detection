@@ -25,7 +25,7 @@ pointwise:
   
 
 windowing:
-  size: 3
+  size: 5
   stride: 1
 
 
