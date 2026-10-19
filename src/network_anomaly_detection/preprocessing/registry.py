@@ -8,6 +8,7 @@ from network_anomaly_detection.models.ml.isoforest.prep import IsoPrep
 PREP_REGISTRY = {
     "ae": AEPrep,
     "isoforest": IsoPrep,
+    "ae_isoforest": AEPrep, # reuse; at least for now
 }
 
 

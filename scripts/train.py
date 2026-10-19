@@ -20,6 +20,9 @@ def main(cfg: DictConfig):
     # Data
     # --------------------------------------------------
 
+
+
+
     data_module = DataModule(
                 train_path = "data/processed/v1/train.csv",
                 val_path = "data/processed/v1/val.csv",

@@ -1,0 +1,126 @@
+n_trials: 2
+n_jobs: 4
+direction: maximize
+metric: pr_auc
+
+
+# --------------------------------------------------------
+# DATA
+# --------------------------------------------------------
+data:
+  windowing:
+    size:
+      choices: [1, 5, 10, 20]
+
+# --------------------------------------------------------
+# PREPROCESSING SEARCH SPACE
+# --------------------------------------------------------
+prep:
+  
+  imputation:
+    names:
+      - simple
+    strategy:
+      choices:
+        - mean
+        - median
+        - most_frequent
+
+  scaler:
+    names: [standard, minmax]
+
+# --------------------------------------------------------
+# AE SEARCH SPACE
+# --------------------------------------------------------
+ae_space:
+  encoder_dims:
+    choices:
+      - [128, 64, 32, 16]
+      - [128, 64, 32]
+      - [64, 32, 16]
+      - [64, 32]
+
+  decoder_dims:
+    choices:
+      - [32, 64, 128]
+      - [32, 64]
+      - [16, 32, 64]
+      - [32, 64, 128, 256]
+
+# --------------------------------------------------------
+# ISOLATION FOREST SEARCH SPACE
+# --------------------------------------------------------
+isoforest_space:
+  n_estimators:
+    low: 100
+    high: 500
+
+  # Only relevant to Isolation Forest's built-in prediction
+  # threshold. Keep fixed if the composite uses a custom
+  # threshold selected from validation scores.
+  #contamination:
+  #  low: 0.01
+  #  high: 0.15
+
+# --------------------------------------------------------
+# AE TRAINING SEARCH SPACE
+# --------------------------------------------------------
+training_space:
+  optimizer:
+    names: [adam, sgd]
+
+    adam:
+      lr:
+        low: 1e-4
+        high: 1e-2
+        log: true
+
+      betas:
+        choices:
+          - [0.9, 0.999]
+          - [0.8, 0.999]
+
+    sgd:
+      lr:
+        low: 1e-3
+        high: 1e-1
+        log: true
+
+      momentum:
+        low: 0.0
+        high: 0.9
+
+      weight_decay:
+        low: 1e-6
+        high: 1e-2
+        log: true
+
+
+  callbacks:
+    print_loss: true
+
+    early_stopping:
+      enabled: true
+      patience:
+        low: 3
+        high: 10
+
+
+  epochs:
+    name: epochs
+    type: int
+    low: 1
+    high: 3
+
+  batch_size:
+    name: batch_size
+    type: categorical
+    choices: [32, 64]
+
+# --------------------------------------------------------
+# THRESHOLDING
+# --------------------------------------------------------
+thresholding:
+  name: constrained_f1
+  params:
+    min_recall: 0.75
