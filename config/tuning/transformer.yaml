@@ -1,4 +1,10 @@
 
+metric: pr_auc
+direction: maximize
+n_trials: 2
+n_jobs: 2
+
+
 
 data:
   windowing:
@@ -6,16 +12,23 @@ data:
       choices: [1, 5, 10, 20]
 
 
-prep:
-  scaler:
-    names: [standard, minmax]
 
-  temporal:
-    delta: true
+prep:
+  pointwise:
+    imputation:
+      names: [simple]
+      strategy:
+        choices: [mean, median, most_frequent]
+
+    scaler:
+      names: [standard, minmax]
+
+    # add temporal later
+
+
 
 
 model_space:
-
   d_model:
     name: d_model
     type: categorical
@@ -45,7 +58,6 @@ model_space:
 
 
 training_space:
-
   optimizer:
     names: [adam, sgd]
 
@@ -75,7 +87,6 @@ training_space:
         high: 1e-2
         log: true
 
-
   callbacks:
     print_loss: true
 
@@ -85,12 +96,11 @@ training_space:
         low: 3
         high: 10
 
-
   epochs:
     name: epochs
     type: int
-    low: 5
-    high: 20
+    low: 1
+    high: 3
 
   batch_size:
     name: batch_size
