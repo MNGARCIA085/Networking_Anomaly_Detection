@@ -2,13 +2,14 @@
 
 from network_anomaly_detection.models.nn.ae.prep import AEPrep
 from network_anomaly_detection.models.ml.isoforest.prep import IsoPrep
-
+from network_anomaly_detection.models.nn.transformer.prep import TransformerPrep
 
 
 PREP_REGISTRY = {
     "ae": AEPrep,
     "isoforest": IsoPrep,
     "ae_isoforest": AEPrep, # reuse; at least for now
+    "transformer": TransformerPrep,
 }
 
 

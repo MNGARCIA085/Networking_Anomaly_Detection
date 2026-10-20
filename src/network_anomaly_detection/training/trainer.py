@@ -51,10 +51,6 @@ class AnomalyLightningModule(pl.LightningModule):
 
         return loss
 
-    #def configure_optimizers(self):
-    #    return self.optimizer
-
-
     def configure_optimizers(self):
         scheduler_config = create_scheduler(
             self.scheduler_cfg,
@@ -73,36 +69,6 @@ class AnomalyLightningModule(pl.LightningModule):
                 "frequency": scheduler_config["frequency"],
             },
         }
-
-
-
-
-"""
-def configure_optimizers(self):
-    cfg = self.scheduler_cfg
-
-    if cfg is None:
-        return self.optimizer
-
-    scheduler = create_scheduler(cfg, self.optimizer)
-
-    scheduler_config = {
-        "scheduler": scheduler,
-        "interval": cfg.get("interval", "epoch"),
-        "frequency": cfg.get("frequency", 1),
-    }
-
-    if cfg["name"] == "reduce_on_plateau":
-        scheduler_config["monitor"] = cfg.get(
-            "monitor", "val_loss"
-        )
-
-    return {
-        "optimizer": self.optimizer,
-        "lr_scheduler": scheduler_config,
-    }
-"""
-
 
 
 
