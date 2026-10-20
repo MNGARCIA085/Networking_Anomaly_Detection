@@ -120,6 +120,7 @@ class NNTrainer:
             accelerator="auto",
             devices=1,
             enable_checkpointing=True,
+            logger=False, # i will log with MLFlow
         )
 
         trainer.fit(

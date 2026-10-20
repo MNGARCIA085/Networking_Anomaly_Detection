@@ -53,7 +53,6 @@ class TransformerAESampler:
         tuning = self.tuning_cfg
 
 
-        print(cfg)
 
         # ====================================================
         # DATA
@@ -106,7 +105,7 @@ class TransformerAESampler:
         # ====================================================
         # PREPROCESSING: TEMPORAL
         # ====================================================
-
+        """
         use_delta = trial.suggest_categorical(
             "prep.temporal.delta.enabled",
             tuning["prep"]["temporal"]["delta"]["choices"],
@@ -117,6 +116,33 @@ class TransformerAESampler:
             "name": "delta",
             "params": {"order": 1},
         }
+        """
+
+
+        # ====================================================
+        # PREPROCESSING: TEMPORAL
+        # ====================================================
+
+        use_delta = trial.suggest_categorical(
+            "prep.temporal.delta.enabled",
+            tuning["prep"]["temporal"]["delta"]["choices"],
+        )
+
+        order = 1
+
+        if use_delta:
+            order = trial.suggest_int(
+                "prep.temporal.delta.order",
+                tuning["prep"]["temporal"]["delta"]["order"]["low"],
+                tuning["prep"]["temporal"]["delta"]["order"]["high"],
+            )
+
+        cfg["model_type"]["prep"]["temporal"]["delta"] = {
+            "enable": use_delta,
+            "name": "delta",
+            "params": {"order": order},
+        }
+
 
 
 
