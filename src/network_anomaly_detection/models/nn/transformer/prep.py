@@ -31,9 +31,6 @@ class TransformerPrep(BasePrep):
             steps.append(imputer)
 
 
-
-
-
         # scaler
         scaler_cfg = cfg["scaler"]
 

@@ -23,7 +23,10 @@ prep:
     scaler:
       names: [standard, minmax]
 
-    # add temporal later
+
+  temporal:
+    delta:
+      choices: [false, true]
 
 
 

@@ -49,7 +49,7 @@ class BasePrep(ABC):
         )
 
         self.temporal_prep = self.build_temporal_prep(
-            self.cfg.get("prep", {}).get("temporal_prep")
+            self.cfg.get("prep", {}).get("temporal") # temporal_prep
         )
 
         return (

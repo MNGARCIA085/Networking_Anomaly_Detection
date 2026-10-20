@@ -151,6 +151,9 @@ class ExperimentPipeline:
 
 
 
+        # to verify: X_train -> (batch size, window_size (seq_len), num_features)
+
+
         # Model
         model = build_model(
             cfg=model_cfg,

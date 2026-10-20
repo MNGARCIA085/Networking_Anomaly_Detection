@@ -1,7 +1,6 @@
 
 
 pointwise:
-  
   imputation:
     enabled: true
     name: simple
@@ -30,10 +29,9 @@ windowing:
 
 
 
-temporal_prep:
-
+temporal: # temporal_prep
   delta:
-    enable: false
+    enable: true
     name: delta
     params:
       order: 1
