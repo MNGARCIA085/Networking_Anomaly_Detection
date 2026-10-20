@@ -521,7 +521,7 @@ class MLFlowLogger(ExperimentLogger):
 
 
     #----------------- save prep (generalioze later)-------------#
-    def save_prep(self, prep):
+    def save_prepv0(self, prep):
         # Keep this artifact path consistent with resume().
         prep_path = self.artifact_path(
             "prep.pkl", #joblib
@@ -529,6 +529,136 @@ class MLFlowLogger(ExperimentLogger):
         )
         prep.save(prep_path)
         self.log_artifact(prep_path, artifact_path="preprocessing")
+
+
+
+
+    #.................
+    def save_prep(self, prep):
+        prep_dir = self.run_artifact_dir() / "preprocessing"
+        prep_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save the complete fitted preprocessing pipeline.
+        prep_path = self.artifact_path(
+            "prep.pkl",
+            artifact_dir=prep_dir,
+        )
+        prep.save(prep_path)
+        self.log_artifact(prep_path, artifact_path="preprocessing")
+
+        # Log optional feature-selection metadata.
+        pointwise = getattr(prep, "pointwise_prep", None)
+        steps = getattr(pointwise, "steps", [])
+
+        selection_metadata = None
+
+        for i, step in enumerate(steps):
+
+
+
+
+            # PCA
+            from sklearn.decomposition import PCA
+            if isinstance(step, PCA):
+                self.log_params({
+                    "pca.n_features_in": int(step.n_features_in_),
+                    "pca.n_components": int(step.n_components_),
+                })
+
+                self.log_metrics({
+                    "pca.explained_variance": float(
+                        step.explained_variance_ratio_.sum()
+                    ),
+                })
+
+                continue
+
+
+
+            # Feature-selection metadata
+            if not hasattr(step, "get_support"):
+                continue
+
+            support = step.get_support()
+            feature_names = None
+
+            # Recover original feature names from the first step that exposes them.
+            for previous_step in steps[:i]:
+                if hasattr(previous_step, "feature_names_in_"):
+                    candidate_names = previous_step.feature_names_in_
+
+                    if len(candidate_names) == len(support):
+                        feature_names = candidate_names.tolist()
+
+            params = step.get_params(deep=False)
+
+            selection_metadata = {
+                "method": step.__class__.__name__,
+                "params": params,
+                "n_features_before": int(len(support)),
+                "n_features_after": int(support.sum()),
+                "n_features_removed": int((~support).sum()),
+            }
+
+            if feature_names is not None:
+                selection_metadata["selected_features"] = [
+                    name
+                    for name, selected in zip(feature_names, support)
+                    if selected
+                ]
+                selection_metadata["removed_features"] = [
+                    name
+                    for name, selected in zip(feature_names, support)
+                    if not selected
+                ]
+
+            # Log comparable scalar parameters.
+            self.log_params({
+                "feature_selection.method": selection_metadata["method"],
+                "feature_selection.n_features_before": selection_metadata[
+                    "n_features_before"
+                ],
+                "feature_selection.n_features_after": selection_metadata[
+                    "n_features_after"
+                ],
+                "feature_selection.n_features_removed": selection_metadata[
+                    "n_features_removed"
+                ],
+            })
+
+            for name, value in params.items():
+                if isinstance(value, (str, int, float, bool)):
+                    self.log_params({
+                        f"feature_selection.{name}": value
+                    })
+
+            # Write detailed feature names and parameters to JSON.
+            metadata_path = self.artifact_path(
+                "feature_selection.json",
+                artifact_dir=prep_dir,
+            )
+
+            with open(metadata_path, "w", encoding="utf-8") as f:
+                json.dump(selection_metadata, f, indent=2, default=str)
+
+            self.log_artifact(
+                metadata_path,
+                artifact_path="preprocessing",
+            )
+
+            break  # Only the first feature selector for now.
+
+        # Log windowing configuration only when enabled/present.
+        windowing = getattr(prep, "windowing", None)
+
+        if windowing is not None and hasattr(windowing, "__dict__"):
+            for name, value in vars(windowing).items():
+                if isinstance(value, (str, int, float, bool)):
+                    self.log_params({f"windowing.{name}": value})    
+
+
+
+
 
 
 

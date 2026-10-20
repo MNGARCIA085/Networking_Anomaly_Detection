@@ -8,6 +8,21 @@ pointwise:
     params:
       strategy: median
 
+  # var. threshold goes bfore sacling; PCA after
+  feature_selection:
+    enabled: true
+    name: variance_threshold
+    params:
+      threshold: 0.0
+
+
+  #feature_selection:
+  #  enabled: true
+  #  name: pca
+  #  params:
+  #    n_components: 0.95
+
+
   scaler:
     enabled: true
     name: standard
@@ -21,6 +36,9 @@ pointwise:
     params:
       method: yeo-johnson
       standardize: false
+
+
+
 
   
 

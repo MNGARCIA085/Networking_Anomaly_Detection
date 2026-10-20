@@ -8,6 +8,16 @@ from network_anomaly_detection.preprocessing.pipeline import (
 from network_anomaly_detection.preprocessing.components.pointwise.scalers import create_scaler
 from network_anomaly_detection.preprocessing.components.pointwise.imputation import create_imputer
 from network_anomaly_detection.preprocessing.components.temporal.delta import create_delta
+from network_anomaly_detection.preprocessing.components.pointwise.feature_selection import create_feature_selector
+
+
+
+"""
+var. threshodl bfore scaling; PCA after
+
+
+"""
+
 
 
 
@@ -22,8 +32,7 @@ class AEPrep(BasePrep):
 
         steps = []
 
-
-        # Imputer
+        # 1. Imputer
         imputer_cfg = cfg.get("imputation", {})
 
         if imputer_cfg.get("enabled", False):
@@ -34,10 +43,19 @@ class AEPrep(BasePrep):
             steps.append(imputer)
 
 
+        # 2. Feature Selection -> Var. threshold (before scaling)
+        feat_sel_cfg = cfg.get("feature_selection", {})
+
+        if feat_sel_cfg.get("enabled", False):
+            if feat_sel_cfg["name"] == "variance_threshold":
+                selector = create_feature_selector(
+                    name=feat_sel_cfg["name"],
+                    **feat_sel_cfg.get("params", {}),
+                )
+                steps.append(selector)
 
 
-
-        # scaler
+        # 3. Scaler
         scaler_cfg = cfg["scaler"]
 
         scaler = create_scaler(
@@ -47,7 +65,20 @@ class AEPrep(BasePrep):
 
         steps.append(scaler)
 
+
+
+        # 4. Feature Selection -> PCA (after scaling)
+        if feat_sel_cfg.get("enabled", False):
+            if feat_sel_cfg["name"] == "pca":
+                selector = create_feature_selector(
+                    name=feat_sel_cfg["name"],
+                    **feat_sel_cfg.get("params", {}),
+                )
+                steps.append(selector)
+        
+
         return PreprocessingPipeline(steps)
+
 
 
 
