@@ -53,11 +53,7 @@ class ExperimentPipeline:
             "thresholding": cfg.get("thresholding", {}),
         }
 
-        # if cfg["experiment"]["type"] == "train":
         run_config["training"] = cfg.get("training", {})
-
-        # elif cfg["experiment"]["type"] == "tune":
-        #     run_config["tuning"] = model_cfg.get("tuning", {})
 
         return run_config
 
@@ -110,9 +106,12 @@ class ExperimentPipeline:
         y_train,
         X_val,
         y_val,
+        nested=False,
         run_name=None,
         metadata=None,
     ):
+
+
         cfg = self.cfg
         model_cfg = cfg["model_type"]
         metadata = metadata or {}

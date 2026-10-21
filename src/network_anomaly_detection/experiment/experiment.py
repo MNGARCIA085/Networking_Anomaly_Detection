@@ -23,6 +23,9 @@ class Experiment:
             logger=logger,
         )
 
+
+
+    """
     def start(self, run_name=None):
 
         run = self.logger.start_run(
@@ -36,6 +39,20 @@ class Experiment:
         })
 
         return run
+    """
+
+
+
+    def start(self, run_name=None, nested=False):
+        run = self.logger.start_run(
+            run_name=run_name,
+            nested=nested,
+        )
+        self.run_id = run.info.run_id
+        self.logger.log_tags({"status": "running"})
+        return run
+
+
 
     def run(
         self,
@@ -46,11 +63,14 @@ class Experiment:
         X_val,
         y_val,
         run_name=None,
+        nested=False,
         metadata=None,
     ):
 
+
         self.start(
             run_name=run_name,
+            nested=nested
         )
 
         try:
@@ -62,6 +82,7 @@ class Experiment:
                 y_train=y_train,
                 X_val=X_val,
                 y_val=y_val,
+                nested=nested,
                 run_name=run_name,
                 metadata=metadata,
             )

@@ -24,6 +24,8 @@ def main(cfg: DictConfig):
     # --------------------------------------------------
 
 
+    # config to dict
+    cfg = OmegaConf.to_container(cfg, resolve=True)
 
 
     data_module = DataModule(
@@ -57,11 +59,11 @@ def main(cfg: DictConfig):
     # --------------------------------------------------
 
     prep_cls = PREP_REGISTRY[
-        cfg.model_type.name
+        cfg['model_type']['name']
     ]
 
     prep = prep_cls(
-        cfg.model_type,
+        cfg['model_type']
     )
 
 
@@ -80,14 +82,9 @@ def main(cfg: DictConfig):
     # --------------------------------------------------
  
     logger = MLFlowLogger(
-        tracking_db=to_absolute_path(cfg.paths.mlflow_db),
-        artifact_dir=to_absolute_path(cfg.paths.mlflow_artifacts),
+        tracking_db=to_absolute_path(cfg['paths']['mlflow_db']),
+        artifact_dir=to_absolute_path(cfg['paths']['mlflow_artifacts']),
     )
-
-
-    # 
-    cfg = OmegaConf.to_container(cfg, resolve=True)
-
 
     experiment = Experiment(
         cfg=cfg,
