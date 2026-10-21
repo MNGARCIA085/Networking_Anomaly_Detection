@@ -12,8 +12,7 @@ from network_anomaly_detection.preprocessing.base import BasePrep
 from network_anomaly_detection.experiment.experiment import Experiment
 from network_anomaly_detection.evaluation.evaluator import Evaluator
 
-from network_anomaly_detection.models.registry import MODEL_REGISTRY
-from network_anomaly_detection.training.registry import TRAINER_REGISTRY
+
 
 
 
@@ -28,13 +27,12 @@ def main(cfg):
 
     parser.add_argument(
         "--run-id",
-        default="7e26973f387d4136825302ed7e3d99aa",
+        default="7fb1cf1c9169479e8d660ec637077649",
         #required=True,
     )
 
     parser.add_argument(
         "--checkpoint",
-        #default="best.pt",
         default="last.ckpt",
     )
 

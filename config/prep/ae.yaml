@@ -1,27 +1,15 @@
-
-
 pointwise:
-  
   imputation:
     enabled: true
     name: simple
     params:
       strategy: median
 
-  # var. threshold goes bfore sacling; PCA after
   feature_selection:
-    enabled: true
+    enabled: false
     name: variance_threshold
     params:
       threshold: 0.0
-
-
-  #feature_selection:
-  #  enabled: true
-  #  name: pca
-  #  params:
-  #    n_components: 0.95
-
 
   scaler:
     enabled: true
@@ -38,24 +26,17 @@ pointwise:
       standardize: false
 
 
-
-
-  
-
 windowing:
   size: 5
   stride: 1
 
 
-
 temporal_prep:
-
   delta:
     enable: false
     name: delta
     params:
       order: 1
-
 
   rolling:
     enabled: false

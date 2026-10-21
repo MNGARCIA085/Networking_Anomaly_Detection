@@ -12,41 +12,38 @@ n_jobs: 2
 
 
 
-data:
+  
+prep:
+  pointwise:
+    imputation:
+      names:
+        - simple
+      strategy:
+        choices:
+          - mean
+          - median
+          - most_frequent
+
+    transform:
+      names:
+        - power
+      params:
+        method:
+          choices:
+            - yeo-johnson
+            - box-cox
+        standardize:
+          choices:
+            - true
+            - false
+
+    scaler:
+      names: [standard, minmax]
+
+
   windowing:
     size:
       choices: [1, 5, 10, 20]
-
-
-
-
-
-prep:
-  
-  imputation:
-    names:
-      - simple
-    strategy:
-      choices:
-        - mean
-        - median
-        - most_frequent
-
-  transform:
-    names:
-      - power
-    params:
-      method:
-        choices:
-          - yeo-johnson
-          - box-cox
-      standardize:
-        choices:
-          - true
-          - false
-
-  scaler:
-    names: [standard, minmax]
 
 
 

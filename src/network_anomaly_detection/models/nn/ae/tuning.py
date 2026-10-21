@@ -1,9 +1,5 @@
 from copy import deepcopy
 
-
-
-
-
 from network_anomaly_detection.tuning.samplers import (
         sample_window_size,
         sample_imputation,
@@ -17,40 +13,6 @@ from network_anomaly_detection.tuning.samplers import (
 # ============================================================
 # Model dimensions (model specific)
 # ============================================================
-
-
-def sample_dimensionsv0(trial, cfg):
-    """ only enforces powers of 2; not architecture"""
-    def sample_layer(param):
-        if param["type"] == "categorical":
-            return trial.suggest_categorical(
-                param["name"],
-                param["choices"],
-            )
-
-        if param["type"] == "int":
-            return trial.suggest_int(
-                param["name"],
-                param["low"],
-                param["high"],
-                step=param.get("step", 1),
-            )
-
-        raise ValueError(
-            f"Unsupported parameter type: {param['type']}"
-        )
-
-    return {
-        "encoder_dims": [
-            sample_layer(p) for p in cfg["encoder_dims"]
-        ],
-        "decoder_dims": [
-            sample_layer(p) for p in cfg["decoder_dims"]
-        ],
-    }
-
-
-
 def sample_dimensions(trial, cfg):
     encoder_dims = trial.suggest_categorical(
         "encoder_dims",
@@ -91,40 +53,36 @@ class AESampler:
 
         tuning = self.tuning_cfg
 
-        # ====================================================
-        # DATA
-        # ====================================================
-
-        cfg["model_type"]["data"]["windowing"]["size"] = (
-            sample_window_size(
-                trial,
-                tuning["data"]["windowing"]["size"],
-            )
-        )
 
         # ====================================================
         # PREPROCESSING
         # ====================================================
-
-        # replace the or. conf with the one from tuning!!!
+        
         cfg["model_type"]["prep"]["pointwise"]["imputation"] = (
             sample_imputation(
                 trial,
-                tuning["prep"]["imputation"], # later adapt to ["prep"]["poinbtwise"]...
+                tuning["prep"]["pointwise"]["imputation"],
             )
         )
 
         cfg["model_type"]["prep"]["pointwise"]["transform"] = (
             sample_transform(
                 trial,
-                tuning["prep"]["transform"],
+                tuning["prep"]["pointwise"]["transform"],
             )
         )
 
         cfg["model_type"]["prep"]["pointwise"]["scaler"] = (
             sample_scaler(
                 trial,
-                tuning["prep"]["scaler"],
+                tuning["prep"]["pointwise"]["scaler"],
+            )
+        )
+
+        cfg["model_type"]["prep"]["windowing"]["size"] = (
+            sample_window_size(
+                trial,
+                tuning["prep"]["windowing"]["size"],
             )
         )
 

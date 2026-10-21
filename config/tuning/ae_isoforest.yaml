@@ -4,30 +4,27 @@ direction: maximize
 metric: pr_auc
 
 
-# --------------------------------------------------------
-# DATA
-# --------------------------------------------------------
-data:
-  windowing:
-    size:
-      choices: [1, 5, 10, 20]
 
 # --------------------------------------------------------
 # PREPROCESSING SEARCH SPACE
 # --------------------------------------------------------
 prep:
-  
-  imputation:
-    names:
-      - simple
-    strategy:
-      choices:
-        - mean
-        - median
-        - most_frequent
+  pointwise:
+    imputation:
+      names:
+        - simple
+      strategy:
+        choices:
+          - mean
+          - median
+          - most_frequent
 
-  scaler:
-    names: [standard, minmax]
+    scaler:
+      names: [standard, minmax]
+
+  windowing:
+    size:
+      choices: [1, 5, 10, 20]
 
 # --------------------------------------------------------
 # AE SEARCH SPACE

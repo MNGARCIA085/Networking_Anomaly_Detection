@@ -30,17 +30,14 @@ class AEIsolationForestSampler:
         tuning = self.tuning_cfg
         model_cfg = cfg["model_type"]
 
-        # ----------------------------------------------------
-        # DATA
-        # ----------------------------------------------------
-        model_cfg["data"]["windowing"]["size"] = sample_window_size(
-            trial,
-            tuning["data"]["windowing"]["size"],
-        )
+
 
         # ----------------------------------------------------
         # PREPROCESSING
         # ----------------------------------------------------
+
+
+        """
         prep_cfg = model_cfg["prep"]["pointwise"]
         prep_tuning = tuning["prep"]
 
@@ -58,6 +55,36 @@ class AEIsolationForestSampler:
             trial,
             prep_tuning["scaler"],
         )
+        """
+
+        cfg["model_type"]["prep"]["pointwise"]["imputation"] = (
+            sample_imputation(
+                trial,
+                tuning["prep"]["pointwise"]["imputation"],
+            )
+        )
+
+        #cfg["model_type"]["prep"]["pointwise"]["transform"] = (
+        #    sample_transform(
+        #        trial,
+        #        tuning["prep"]["pointwise"]["transform"],
+        #   )
+        #)
+
+        cfg["model_type"]["prep"]["pointwise"]["scaler"] = (
+            sample_scaler(
+                trial,
+                tuning["prep"]["pointwise"]["scaler"],
+            )
+        )
+
+        cfg["model_type"]["prep"]["windowing"]["size"] = (
+            sample_window_size(
+                trial,
+                tuning["prep"]["windowing"]["size"],
+            )
+        )
+
 
         # ----------------------------------------------------
         # AE ARCHITECTURE

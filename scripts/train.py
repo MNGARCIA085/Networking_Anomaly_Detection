@@ -8,7 +8,6 @@ from network_anomaly_detection.data.data_module import DataModule
 from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
 from network_anomaly_detection.experiment.experiment import Experiment
-
 from network_anomaly_detection.evaluation.evaluator import Evaluator
 
 
@@ -46,13 +45,6 @@ def main(cfg: DictConfig):
             "count": counts,
             "proportion": proportions,
         }).fillna(0).to_string())
-
-
-
-    # Final evaluation, when appropriate
-    #X_test, y_test = data_module.load_split("test")
-
-
 
 
     #print("Train labels:", y_train.value_counts().to_dict())

@@ -6,8 +6,9 @@ from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
 
 from network_anomaly_detection.experiment.experiment import Experiment
-
-
+from network_anomaly_detection.tuning.tuner import Tuner
+from network_anomaly_detection.evaluation.evaluator import Evaluator
+    
 
 @hydra.main(
     config_path="../config",
@@ -20,33 +21,11 @@ def main(cfg: DictConfig):
     # Data
     # --------------------------------------------------
 
-    """
-    data = DataModule(
-        "data/data.csv",
-        "data/data.csv",
-    )
-    """
-    #data = DataModule(
-    #    "data/X_train.csv",
-    #    "data/X_test.csv",
-    #)
-    #X_train, y_train, X_val, y_val = data.load()
-
-
-
     data_module = DataModule(
                 train_path = "data/processed/v1/train.csv",
                 val_path = "data/processed/v1/val.csv",
             )
-
-
     X_train, y_train, X_val, y_val = data_module.load_train_val()
-
-
-    # only AEs...
-    #mask = y_train == 0
-    #X_train = X_train.loc[mask]
-    #y_train = y_train.loc[mask]
 
     # --------------------------------------------------
     # Preprocessing
@@ -70,15 +49,10 @@ def main(cfg: DictConfig):
     )
 
     # --------------------------------------------------
-    # Experiment
+    # Tuning
     # --------------------------------------------------
-
-    from network_anomaly_detection.evaluation.evaluator import Evaluator
     evaluator = Evaluator()
     logger = MLFlowLogger()
-
-
-    from network_anomaly_detection.tuning.tuner import Tuner
 
     tuner = Tuner(
             cfg,
@@ -96,7 +70,6 @@ def main(cfg: DictConfig):
             n_trials=2,
             n_jobs=2,
         )
-
 
 
     print(study)
@@ -122,8 +95,6 @@ def main(cfg: DictConfig):
 
 
     print('Training with best config')
-
-
 
 
     experiment = Experiment(

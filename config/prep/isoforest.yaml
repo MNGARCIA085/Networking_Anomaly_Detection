@@ -8,7 +8,6 @@ pointwise:
     params:
       strategy: median
 
-
   scaler:
     enable: true
     name: standard
@@ -17,10 +16,10 @@ pointwise:
       with_std: true
 
   feature_selection:
-    enable: false
-    name: variance_threshold
+    enabled: false
+    name: pca
     params:
-      threshold: 0.01
+      n_components: 0.95
 
   dim_reduction:
     enable: true

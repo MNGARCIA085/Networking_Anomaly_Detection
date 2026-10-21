@@ -10,6 +10,8 @@ from network_anomaly_detection.tuning.samplers import (
 )
 
 
+
+
 def sample_transformer_dimensions(trial, cfg):
     return {
         "d_model": trial.suggest_categorical(
@@ -38,9 +40,6 @@ def sample_transformer_dimensions(trial, cfg):
 
 
 
-
-
-
 class TransformerAESampler:
 
     def __init__(self, base_cfg):
@@ -55,19 +54,9 @@ class TransformerAESampler:
 
 
         # ====================================================
-        # DATA
-        # ====================================================
-
-        cfg["model_type"]["data"]["windowing"]["size"] = (
-            sample_window_size(
-                trial,
-                tuning["data"]["windowing"]["size"],
-            )
-        )
-
-        # ====================================================
         # PREPROCESSING: POINTWISE
         # ====================================================
+
 
         cfg["model_type"]["prep"]["pointwise"]["imputation"] = (
             sample_imputation(
@@ -76,12 +65,6 @@ class TransformerAESampler:
             )
         )
 
-        #cfg["model_type"]["prep"]["pointwise"]["transform"] = (
-        #    sample_transform(
-        #        trial,
-        #        tuning["prep"]["pointwise"]["transform"],
-        #    )
-        #)
 
         cfg["model_type"]["prep"]["pointwise"]["scaler"] = (
             sample_scaler(
@@ -90,33 +73,17 @@ class TransformerAESampler:
             )
         )
 
-        # ====================================================
-        # PREPROCESSING: TEMPORAL
-        # ====================================================
-
-        # Delta configuration is copied from the tuning config.
-        # Remove this block if delta is not being tuned.
-        #if "temporal" in tuning["prep"]:
-        #    cfg["model_type"]["prep"]["temporal"]["delta"] = (
-        #        deepcopy(tuning["prep"]["temporal"]["delta"])
-        #    )
-
 
         # ====================================================
-        # PREPROCESSING: TEMPORAL
+        # PREPROCESSING: WINDOWING
         # ====================================================
-        """
-        use_delta = trial.suggest_categorical(
-            "prep.temporal.delta.enabled",
-            tuning["prep"]["temporal"]["delta"]["choices"],
+
+        cfg["model_type"]["prep"]["windowing"]["size"] = (
+            sample_window_size(
+                trial,
+                tuning["prep"]["windowing"]["size"],
+            )
         )
-
-        cfg["model_type"]["prep"]["temporal"]["delta"] = {
-            "enable": use_delta,
-            "name": "delta",
-            "params": {"order": 1},
-        }
-        """
 
 
         # ====================================================

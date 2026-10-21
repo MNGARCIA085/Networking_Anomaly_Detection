@@ -5,20 +5,3 @@ split:
   train_size: 0.70
   val_size: 0.15
   test_size: 0.15
-
-
-
-
-windowing:
-  size: 5
-  stride: 1
-
-
-train_path: data/arriba.csv
-val_path: data/arriba.csv
-y_val_path: data/arriba.csv
-test_path: data/arriba.csv
-y_test_path: data/arriba.csv
-
-
-
