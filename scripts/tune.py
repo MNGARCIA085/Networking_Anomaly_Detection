@@ -1,5 +1,5 @@
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from network_anomaly_detection.data.data_module import DataModule
 from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
@@ -17,6 +17,10 @@ from network_anomaly_detection.evaluation.evaluator import Evaluator
 )
 def main(cfg: DictConfig):
 
+
+    # omegaconf -> dict
+    cfg = OmegaConf.to_container(cfg, resolve=True)
+
     # --------------------------------------------------
     # Data
     # --------------------------------------------------
@@ -31,6 +35,7 @@ def main(cfg: DictConfig):
     # Preprocessing
     # --------------------------------------------------
 
+    """
     prep_cls = PREP_REGISTRY[
         cfg.model_type.name
     ]
@@ -38,6 +43,16 @@ def main(cfg: DictConfig):
     prep = prep_cls(
         cfg.model_type,
     )
+    """
+
+    prep_cls = PREP_REGISTRY[
+        cfg['model_type']['name']
+    ]
+
+    prep = prep_cls(
+        cfg['model_type']
+    )
+
 
     X_train, y_train = prep.select_training_data(X_train, y_train)
 
@@ -112,7 +127,7 @@ def main(cfg: DictConfig):
         y_train=y_train,
         X_val=X_val,
         y_val=y_val,
-        run_name=f"{cfg.model_type.name}_tunned",
+        #run_name=f"{cfg.model_type.name}_tunned",
     )
 
 

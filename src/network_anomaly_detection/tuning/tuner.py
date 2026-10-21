@@ -13,10 +13,10 @@ class Tuner:
         self.evaluator = evaluator
         self.logger = logger
 
-        self.tun_cfg = cfg.model_type.tuning
+        self.tun_cfg = cfg["model_type"]["tuning"]
 
         self.sampler = TUNING_REGISTRY[
-            cfg.model_type.name
+            cfg["model_type"]["name"]
         ](
             #tuning_cfg=self.tun_cfg,
             base_cfg=cfg,
@@ -36,13 +36,13 @@ class Tuner:
 
         # Use YAML defaults unless explicitly overridden
         if n_trials is None:
-            n_trials = self.tun_cfg.n_trials
+            n_trials = self.tun_cfg["n_trials"]
 
         if n_jobs is None:
-            n_jobs = self.tun_cfg.n_jobs
+            n_jobs = self.tun_cfg["n_jobs"]
 
-        metric = self.tun_cfg.metric
-        direction = self.tun_cfg.direction
+        metric = self.tun_cfg["metric"]
+        direction = self.tun_cfg["direction"]
 
         def objective(trial):
 
