@@ -87,16 +87,7 @@ class IsoForestSampler:
         cfg = deepcopy(self.base_cfg)
         tuning = self.tuning_cfg
 
-        # ====================================================
-        # DATA
-        # ====================================================
-
-        cfg["model_type"]["data"]["windowing"]["size"] = (
-            sample_window_size(
-                trial,
-                tuning["data"]["windowing"]["size"],
-            )
-        )
+        
 
         # ====================================================
         # PREPROCESSING
@@ -113,6 +104,14 @@ class IsoForestSampler:
             sample_feature_selection(
                 trial,
                 tuning["prep"]["pointwise"]["feature_selection"],
+            )
+        )
+
+
+        cfg["model_type"]["prep"]["windowing"]["size"] = (
+            sample_window_size(
+                trial,
+                tuning["prep"]["windowing"]["size"],
             )
         )
 
@@ -136,6 +135,8 @@ class IsoForestSampler:
                 tuning["model_space"]["n_estimators"]["high"],
             )
         )
+
+
 
         cfg["model_type"]["models"]["contamination"] = (
             trial.suggest_float(

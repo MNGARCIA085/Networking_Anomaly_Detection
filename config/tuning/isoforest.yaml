@@ -6,10 +6,7 @@ direction: maximize
 n_trials: 2
 n_jobs: 2
 
-data:
-  windowing:
-    size:
-      choices: [1, 5, 10, 20]
+
 
 prep:
   pointwise:
@@ -24,8 +21,6 @@ prep:
           low: 0.0
           high: 0.1
 
-
-
     dimensionality:
       enabled: true
       names:
@@ -34,6 +29,11 @@ prep:
       n_components:
         low: 1
         high: 8
+
+
+  windowing:
+    size:
+      choices: [1, 5, 10, 20]
 
 
 
