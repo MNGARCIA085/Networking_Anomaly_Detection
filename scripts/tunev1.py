@@ -26,9 +26,14 @@ def main(cfg: DictConfig):
     evaluator = Evaluator()
     logger = MLFlowLogger()
 
-    with logger.start_run(
-        run_name=f"{cfg['model_type']['name']}_tuning"
-    ):
+    #with logger.start_run(
+    #    run_name=f"{cfg['model_type']['name']}_tuning"
+    #):
+
+    with logger.start_run(run_name=f"{cfg['model_type']['name']}_tuning") as parent_run:
+        parent_run_id = parent_run.info.run_id
+
+
         logger.log_tags({
             "run_type": "tuning",
             "status": "running",
@@ -48,8 +53,9 @@ def main(cfg: DictConfig):
                 y_train=y_train,
                 X_val=X_val,
                 y_val=y_val,
-                n_trials=1,
-                n_jobs=1,
+                parent_run_id=parent_run_id,
+                n_trials=2,
+                n_jobs=2,
             )
 
             best_cfg = tuner.get_best_config(study)

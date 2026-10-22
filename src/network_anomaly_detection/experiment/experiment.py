@@ -1,19 +1,9 @@
-
 from .pipeline import ExperimentPipeline
-
-#
-# diagram of lifecycle!!!
-
-
 
 
 class Experiment:
 
-    def __init__(
-        self,
-        cfg,
-        logger,
-    ):
+    def __init__(self, cfg, logger):
         self.cfg = cfg
         self.logger = logger
         self.run_id = None
@@ -24,35 +14,19 @@ class Experiment:
         )
 
 
+    
 
-    """
-    def start(self, run_name=None):
-
-        run = self.logger.start_run(
-            run_name=run_name,
-        )
-
-        self.run_id = run.info.run_id
-
-        self.logger.log_tags({
-            "status": "running",
-        })
-
-        return run
-    """
-
-
-
-    def start(self, run_name=None, nested=False):
+    def start(self, run_name=None, nested=False, parent_run_id=None):
         run = self.logger.start_run(
             run_name=run_name,
             nested=nested,
+            parent_run_id=parent_run_id,
         )
+
         self.run_id = run.info.run_id
         self.logger.log_tags({"status": "running"})
+
         return run
-
-
 
     def run(
         self,
@@ -64,17 +38,16 @@ class Experiment:
         y_val,
         run_name=None,
         nested=False,
+        parent_run_id=None,
         metadata=None,
     ):
-
-
         self.start(
             run_name=run_name,
-            nested=nested
+            nested=nested,
+            parent_run_id=parent_run_id,
         )
 
         try:
-
             result = self.pipeline.run(
                 prep=prep,
                 evaluator=evaluator,
@@ -88,17 +61,13 @@ class Experiment:
             )
 
             self.finish()
-
             return result
 
         except Exception as error:
-
             self.fail(error)
-
             raise
 
     def finish(self):
-
         self.logger.log_tags({
             "status": "finished",
         })
@@ -106,7 +75,6 @@ class Experiment:
         self.logger.end_run()
 
     def fail(self, error):
-
         self.logger.log_tags({
             "status": "failed",
             "error": str(error),
@@ -114,8 +82,6 @@ class Experiment:
 
         self.logger.end_run()
 
-
-    # resume
     def resume(
         self,
         run_id,
@@ -128,7 +94,6 @@ class Experiment:
         run_name=None,
     ):
         try:
-
             result = self.pipeline.resume(
                 run_id=run_id,
                 evaluator=evaluator,
@@ -143,10 +108,5 @@ class Experiment:
             return result
 
         except Exception as error:
-
             self.fail(error)
-
             raise
-
-
-   

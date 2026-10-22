@@ -92,21 +92,30 @@ class MLFlowLogger(ExperimentLogger):
         )
 
 
-    """
-    def start_run(
-        self,
-        run_name=None
-    ):
-        return mlflow.start_run(
-            run_name=run_name
-        )
-    """
 
+    """
     def start_run(self, run_name=None, nested=False):
         return mlflow.start_run(
             run_name=run_name,
             nested=nested,
         )
+    """
+
+
+    def start_run(self, run_name=None, nested=False, parent_run_id=None):
+        if parent_run_id is not None:
+            run = mlflow.start_run(
+                run_name=run_name,
+                nested=True,
+                parent_run_id=parent_run_id,
+            )
+        else:
+            run = mlflow.start_run(
+                run_name=run_name,
+                nested=nested,
+            )
+
+        return run
 
 
     def end_run(self):

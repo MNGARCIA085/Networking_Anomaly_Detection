@@ -31,6 +31,7 @@ class Tuner:
         y_train,
         X_val,
         y_val,
+        parent_run_id=None,
         n_trials=None,
         n_jobs=None,
     ):
@@ -92,6 +93,7 @@ class Tuner:
                 nested=True,
                 run_name=f"trial_{trial.number}",
                 metadata={
+                    "mlflow.parentRunId": parent_run_id,
                     "run_type": "tuning_trial",
                     "trial_number": str(trial.number),
                     "tuning_metric": metric,
