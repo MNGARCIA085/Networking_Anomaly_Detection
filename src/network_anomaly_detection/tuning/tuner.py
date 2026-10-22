@@ -59,6 +59,10 @@ class Tuner:
                 trial_cfg,
             )
 
+
+            print('trial_cfg')
+            print(trial_cfg)
+
             # Create a fresh prep for this trial's configuration.
             prep_cls = PREP_REGISTRY[trial_cfg["model_type"]["name"]]
             prep = prep_cls(trial_cfg["model_type"])
@@ -88,6 +92,7 @@ class Tuner:
                 y_train=y_trial_train,
                 X_val=X_val,
                 y_val=y_val,
+                nested=True,
                 run_name=f"trial_{trial.number}",
                 metadata={
                     "run_type": "tuning_trial",
@@ -120,9 +125,21 @@ class Tuner:
 
         return study
 
+
+    @staticmethod
+    def get_best_config(study):
+        from copy import deepcopy
+        cfg = deepcopy(study.best_trial.user_attrs["config"])
+        # remove tuning that only describes sample configs
+        cfg["model_type"].pop("tuning", None)
+        return cfg
+
+
+    """
     @staticmethod
     def get_best_config(study):
 
         return study.best_trial.user_attrs[
             "config"
         ]
+    """

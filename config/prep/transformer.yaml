@@ -29,7 +29,7 @@ windowing:
 
 
 
-temporal: # temporal_prep
+temporal:
   delta:
     enable: true
     name: delta
