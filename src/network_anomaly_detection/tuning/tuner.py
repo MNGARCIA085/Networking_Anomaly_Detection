@@ -2,6 +2,7 @@ import copy
 import optuna
 
 from network_anomaly_detection.experiment.experiment import Experiment
+from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 from .registry import TUNING_REGISTRY
 
 
@@ -25,7 +26,6 @@ class Tuner:
 
     def run(
         self,
-        prep,
         X_train,
         y_train,
         X_val,
@@ -59,6 +59,19 @@ class Tuner:
                 trial_cfg,
             )
 
+            # Create a fresh prep for this trial's configuration.
+            prep_cls = PREP_REGISTRY[trial_cfg["model_type"]["name"]]
+            prep = prep_cls(trial_cfg["model_type"])
+
+            # Apply model-specific selection to training data.
+            X_trial_train, y_trial_train = prep.select_training_data(
+                X_train.copy(),
+                y_train.copy(),
+            )
+
+            # Fit preprocessing exclusively on this trial's training data.
+            prep.fit(X_trial_train, y_trial_train)
+
             # --------------------------------------------------
             # One independent Experiment per trial
             # --------------------------------------------------
@@ -71,8 +84,8 @@ class Tuner:
             result = experiment.run(
                 prep=prep,
                 evaluator=self.evaluator,
-                X_train=X_train,
-                y_train=y_train,
+                X_train=X_trial_train,
+                y_train=y_trial_train,
                 X_val=X_val,
                 y_val=y_val,
                 run_name=f"trial_{trial.number}",

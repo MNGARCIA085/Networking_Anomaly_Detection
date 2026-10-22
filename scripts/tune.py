@@ -2,7 +2,6 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 
 from network_anomaly_detection.data.data_module import DataModule
-from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
 
 from network_anomaly_detection.experiment.experiment import Experiment
@@ -31,37 +30,6 @@ def main(cfg: DictConfig):
             )
     X_train, y_train, X_val, y_val = data_module.load_train_val()
 
-    # --------------------------------------------------
-    # Preprocessing
-    # --------------------------------------------------
-
-    """
-    prep_cls = PREP_REGISTRY[
-        cfg.model_type.name
-    ]
-
-    prep = prep_cls(
-        cfg.model_type,
-    )
-    """
-
-    prep_cls = PREP_REGISTRY[
-        cfg['model_type']['name']
-    ]
-
-    prep = prep_cls(
-        cfg['model_type']
-    )
-
-
-    X_train, y_train = prep.select_training_data(X_train, y_train)
-
-
-    # Fit preprocessing ONLY on training data.
-    prep.fit(
-        X_train,
-        y_train,
-    )
 
     # --------------------------------------------------
     # Tuning
@@ -77,7 +45,6 @@ def main(cfg: DictConfig):
 
 
     study = tuner.run(
-            prep=prep,
             X_train=X_train,
             y_train=y_train,
             X_val=X_val,
@@ -119,6 +86,8 @@ def main(cfg: DictConfig):
 
 
     evaluator = Evaluator()
+
+    # i have to create and fit my best prep
 
     result = experiment.run(
         prep=prep,
