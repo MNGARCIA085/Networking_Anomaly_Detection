@@ -1,5 +1,4 @@
 defaults:
-  - /data: data
   - /models: ae
   - /training: ae
   - /tuning: ae

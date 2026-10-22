@@ -1,5 +1,6 @@
 import copy
 import optuna
+from copy import deepcopy
 
 from network_anomaly_detection.experiment.experiment import Experiment
 from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
@@ -19,8 +20,8 @@ class Tuner:
         self.sampler = TUNING_REGISTRY[
             cfg["model_type"]["name"]
         ](
-            #tuning_cfg=self.tun_cfg,
             base_cfg=cfg,
+            tuning_cfg=self.tun_cfg,
         )
 
 
@@ -58,10 +59,6 @@ class Tuner:
                 "config",
                 trial_cfg,
             )
-
-
-            print('trial_cfg')
-            print(trial_cfg)
 
             # Create a fresh prep for this trial's configuration.
             prep_cls = PREP_REGISTRY[trial_cfg["model_type"]["name"]]
@@ -126,20 +123,16 @@ class Tuner:
         return study
 
 
+
+    
     @staticmethod
     def get_best_config(study):
-        from copy import deepcopy
         cfg = deepcopy(study.best_trial.user_attrs["config"])
-        # remove tuning that only describes sample configs
+        # remove unnecessary keys
         cfg["model_type"].pop("tuning", None)
+        cfg.pop("paths", None)
+        cfg.pop("tracking", None)
+        cfg.pop("experiment_name", None)
         return cfg
 
-
-    """
-    @staticmethod
-    def get_best_config(study):
-
-        return study.best_trial.user_attrs[
-            "config"
-        ]
-    """
+    

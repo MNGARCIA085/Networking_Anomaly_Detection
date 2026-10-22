@@ -1,4 +1,5 @@
 import hydra
+import mlflow
 from omegaconf import DictConfig, OmegaConf
 
 from network_anomaly_detection.data.data_module import DataModule
@@ -38,7 +39,7 @@ def main(cfg: DictConfig):
 
             # pass only what it needs
             cfg.pop('paths', None)
-            
+
 
             tuner = Tuner(cfg, evaluator, logger)
 
@@ -52,17 +53,7 @@ def main(cfg: DictConfig):
             )
 
             best_cfg = tuner.get_best_config(study)
-
-            print(best_cfg)
-            # maybe log best config
-
-
-
-            import mlflow
-
             best_trial = study.best_trial
-            # all conf .... best_cfg = best_trial.user_attrs["config"]
-
  
 
             mlflow.log_dict(
@@ -74,6 +65,9 @@ def main(cfg: DictConfig):
             mlflow.log_param("best_trial_number", best_trial.number)
 
 
+            logger.log_tags({"status": "finished"})
+
+
         except Exception as error:
             logger.log_tags({
                 "status": "failed",
@@ -82,14 +76,8 @@ def main(cfg: DictConfig):
             raise
 
 
-
-    # Build and fit fresh preprocessing for the best config.
     # ========= Retrain best model ========= #
-
-
     print('\n Retrain with best model\n')
-
-    from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
     prep_cls = PREP_REGISTRY[best_cfg["model_type"]["name"]]
     prep = prep_cls(best_cfg["model_type"]) # later pass more specific conf
 
@@ -107,18 +95,17 @@ def main(cfg: DictConfig):
         y_train=y_train_selected,
         X_val=X_val,
         y_val=y_val,
-        nested=False,
         run_name="best_config_retrain",
     )
 
-    logger.log_tags({"status": "finished"})
+    
 
     print("Best value:", study.best_value)
     print("Best parameters:", study.best_params)
     print("Best config:", best_cfg)
 
 
-
+    return
 
 
 

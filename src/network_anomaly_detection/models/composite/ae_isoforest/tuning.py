@@ -21,22 +21,19 @@ threshold
 
 class AEIsolationForestSampler:
 
-    def __init__(self, base_cfg):
+    def __init__(self, base_cfg, tuning_cfg):
         self.base_cfg = deepcopy(base_cfg)
-        self.tuning_cfg = base_cfg["model_type"]["tuning"]
+        self.tuning_cfg = tuning_cfg
+
 
     def sample(self, trial):
         cfg = deepcopy(self.base_cfg)
         tuning = self.tuning_cfg
         model_cfg = cfg["model_type"]
 
-
-
         # ----------------------------------------------------
         # PREPROCESSING
         # ----------------------------------------------------
-
-
         """
         prep_cfg = model_cfg["prep"]["pointwise"]
         prep_tuning = tuning["prep"]

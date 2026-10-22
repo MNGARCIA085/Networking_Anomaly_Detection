@@ -1,5 +1,4 @@
 defaults:
-  - /data: data
   - /models: ae_isoforest
   - /training: ae_isoforest
   - /tuning: ae_isoforest

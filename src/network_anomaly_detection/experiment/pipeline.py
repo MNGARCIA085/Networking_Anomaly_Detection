@@ -37,25 +37,6 @@ class ExperimentPipeline:
         self.logger = logger
         self.run_id = None
 
-    @staticmethod
-    def _build_run_config(cfg):
-        run_config = {
-            "experiment": {
-                "type": cfg["name"],
-                # "seed": cfg["random_state"],
-            },
-            "model": {
-                # "type": cfg["name"],
-                "params": cfg.get("models", {}),
-            },
-            "data": cfg["data"],
-            "preprocessing": cfg.get("prep", {}),
-            "thresholding": cfg.get("thresholding", {}),
-        }
-
-        run_config["training"] = cfg.get("training", {})
-
-        return run_config
 
     def _fit_thresholding(self, model_cfg, scores, y_val):
         """Fit and persist a thresholding strategy, if configured."""
@@ -130,7 +111,10 @@ class ExperimentPipeline:
         })
 
         # config
-        self.logger.log_config(self._build_run_config(cfg["model_type"]))
+        mlflow.log_dict(
+            cfg,
+            artifact_file="all_cfg.json",
+        )
 
         # metadata
         self.logger.log_tags(metadata)

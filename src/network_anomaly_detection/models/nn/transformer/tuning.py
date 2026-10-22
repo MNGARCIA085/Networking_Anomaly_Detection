@@ -42,22 +42,18 @@ def sample_transformer_dimensions(trial, cfg):
 
 class TransformerAESampler:
 
-    def __init__(self, base_cfg):
+    def __init__(self, base_cfg, tuning_cfg):
         self.base_cfg = deepcopy(base_cfg)
-        self.tuning_cfg = base_cfg["model_type"]["tuning"]
+        self.tuning_cfg = tuning_cfg
 
     def sample(self, trial):
         # Start from complete experiment configuration
         cfg = deepcopy(self.base_cfg)
         tuning = self.tuning_cfg
 
-
-
         # ====================================================
         # PREPROCESSING: POINTWISE
         # ====================================================
-
-
         cfg["model_type"]["prep"]["pointwise"]["imputation"] = (
             sample_imputation(
                 trial,

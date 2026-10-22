@@ -74,13 +74,10 @@ def sample_dimensionality(trial, cfg):
 
 class IsoForestSampler:
 
-    def __init__(self, base_cfg):
-
+    def __init__(self, base_cfg, tuning_cfg):
         self.base_cfg = deepcopy(base_cfg)
+        self.tuning_cfg = tuning_cfg
 
-        self.tuning_cfg = (
-            base_cfg["model_type"]["tuning"]
-        )
 
     def sample(self, trial):
 
