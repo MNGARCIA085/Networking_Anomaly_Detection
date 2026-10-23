@@ -1,49 +1,62 @@
+random_state: 42
 
+metric: pr_auc
+direction: maximize
+n_trials: 2
+n_jobs: 2
 
+prep:
+  pointwise:
+    imputation:
+      names:
+        - simple
+      strategy:
+        choices:
+          - mean
+          - median
+          - most_frequent
 
-data:
+    transform:
+      names:
+        - power
+      params:
+        method:
+          choices:
+            - yeo-johnson
+            - box-cox
+        standardize:
+          choices:
+            - true
+            - false
+
+    scaler:
+      names: [standard, minmax]
+
   windowing:
     size:
       choices: [1, 5, 10, 20]
 
-
-prep:
-  scaler:
-    names: [standard, minmax]
-
-
 model_space:
   encoder_dims:
-    - name: enc1
-      type: int
-      low: 16
-      high: 64
-
-    - name: enc2
-      type: int
-      low: 4
-      high: 32
-
-  latent_dim:
-    name: latent_dim
-    type: int
-    low: 2
-    high: 8
+    choices:
+      - [128, 64, 16]
+      - [128, 32, 8]
+      - [64, 32, 8]
+      - [64, 16, 4]
 
   decoder_dims:
-    - name: dec1
-      type: int
-      low: 16
-      high: 64
+    choices:
+      - [16, 64]
+      - [8, 32]
+      - [8, 32, 64]
+
+  latent_dim:
+    choices: [2, 4, 8, 16]
 
   beta:
-    name: beta
-    type: float
-    low: 0.1
+    low: 0.01
     high: 2.0
-
-
-
+    log: true
 
 training_space:
   optimizer:
@@ -75,7 +88,6 @@ training_space:
         high: 1e-2
         log: true
 
-
   callbacks:
     print_loss: true
 
@@ -85,14 +97,18 @@ training_space:
         low: 3
         high: 10
 
-
   epochs:
     name: epochs
     type: int
-    low: 5
-    high: 20
+    low: 1
+    high: 3
 
   batch_size:
     name: batch_size
     type: categorical
     choices: [32, 64]
+
+thresholding:
+  name: constrained_f1
+  params:
+    min_recall: 0.75

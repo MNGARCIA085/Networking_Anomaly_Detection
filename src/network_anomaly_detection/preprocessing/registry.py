@@ -10,6 +10,7 @@ PREP_REGISTRY = {
     "isoforest": IsoPrep,
     "ae_isoforest": AEPrep, # reuse; at least for now
     "transformer": TransformerPrep,
+    "vae": AEPrep, # reuse; at least for now
 }
 
 

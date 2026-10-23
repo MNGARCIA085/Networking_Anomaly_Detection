@@ -9,11 +9,6 @@ from  network_anomaly_detection.training.nn.schedulers import create_scheduler
 
 
 
-
-
-
-
-
 class AnomalyLightningModule(pl.LightningModule):
 
     def __init__(self, model, optimizer, criterion, scheduler_cfg=None):
@@ -74,11 +69,6 @@ class AnomalyLightningModule(pl.LightningModule):
                 "frequency": scheduler_config["frequency"],
             },
         }
-
-
-
-
-
 
 
 
@@ -157,64 +147,3 @@ class NNTrainer:
         )
 
         return self.model
-
-
-
-
-"""
-VAE
-
-import torch
-
-
-class VAELightningModule(AnomalyLightningModule):
-
-    def _compute_loss(self, batch):
-        X, y = batch
-
-        recon, mu, logvar = self.model(X)
-
-        reconstruction_loss = self.criterion(recon, X)
-
-        kl_loss = -0.5 * torch.mean(
-            1 + logvar - mu.pow(2) - logvar.exp()
-        )
-
-        return reconstruction_loss + kl_loss
-
-class VAETrainer(NNTrainer):
-
-    def __init__(
-        self,
-        model,
-        cfg,
-        checkpoint_dir=None,
-    ):
-        optimizer = create_optimizer(
-            cfg["optimizer"],
-            model.model.parameters(),
-        )
-
-        loss = create_loss(cfg["loss"])
-
-        callbacks = create_callbacks(
-            cfg.get("callbacks", {}),
-            checkpoint_dir=checkpoint_dir,
-        )
-
-        trainer_cfg = TrainingConfig(
-            epochs=cfg["epochs"],
-            batch_size=cfg["batch_size"],
-            optimizer=optimizer,
-            loss=loss,
-            scheduler=cfg.get("scheduler"),
-            callbacks=callbacks,
-            num_workers=cfg.get("num_workers", 0),
-        )
-
-        super().__init__(
-            model=model.model,
-            cfg=trainer_cfg,
-            lightning_module_cls=VAELightningModule,
-        )
-"""

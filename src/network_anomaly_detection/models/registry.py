@@ -1,6 +1,7 @@
 
 
 from network_anomaly_detection.models.nn.ae.model import AEModel
+from network_anomaly_detection.models.nn.vae.model import VAEModel
 from network_anomaly_detection.models.ml.isoforest.model import IsoForestModel
 from network_anomaly_detection.models.composite.ae_isoforest.model import AEIsolationForestModel
 
@@ -13,6 +14,7 @@ MODEL_REGISTRY = {
     "isoforest": IsoForestModel,
     "ae_isoforest": AEIsolationForestModel,
     "transformer": TransformerAEModel,
+    "vae": VAEModel,
 }
 
 
