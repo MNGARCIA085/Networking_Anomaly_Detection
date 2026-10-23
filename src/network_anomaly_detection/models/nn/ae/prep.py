@@ -1,8 +1,5 @@
 import numpy as np
-
 from network_anomaly_detection.preprocessing.base import BasePrep
-
-
 
 
 class AEPrep(BasePrep):

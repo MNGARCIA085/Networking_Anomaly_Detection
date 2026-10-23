@@ -1,0 +1,16 @@
+| Test | What it protects |
+|---|---|
+| Pointwise preprocessing is fitted on training data | Validation data cannot influence fitted imputation, scaling, or feature selection. |
+| Preprocessing stages execute in the correct order | Pointwise → windowing → temporal. |
+| `transform()` reuses fitted stages | Transforming new data must not refit preprocessing. |
+| `transform_with_labels()` preserves label alignment | Windowing must keep the corresponding labels aligned with the resulting samples. |
+| `select_training_data()` preserves all samples by default | Models without special filtering retain the complete training set. |
+| Save/load preserves fitted behavior | Resuming or reusing preprocessing doesn't silently change the transformation. |
+
+
+
+pip install pytest-cov
+
+
+
+pytest tests/ --cov=network_anomaly_detection --cov-report=term-missing

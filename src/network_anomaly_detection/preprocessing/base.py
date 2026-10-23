@@ -14,7 +14,9 @@ from network_anomaly_detection.preprocessing.components.temporal.delta import cr
 
 
 
-class BasePrep(ABC):
+
+
+class BasePrep():
     """Constructs and orchestrates the preprocessing stages."""
 
     def __init__(self, cfg):

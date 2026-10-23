@@ -49,6 +49,47 @@ class AdamOptimizer(BaseOptimizer):
 
 
 
+class SGDOptimizer(BaseOptimizer):
+
+    @staticmethod
+    def sample(trial, cfg):
+
+        return {
+            "name": "sgd",
+            "params": {
+                "lr": trial.suggest_float(
+                    "optimizer.lr",
+                    cfg.lr.low,
+                    cfg.lr.high,
+                    log=cfg.lr.log,
+                ),
+                "momentum": trial.suggest_float(
+                    "optimizer.momentum",
+                    cfg.momentum.low,
+                    cfg.momentum.high,
+                ),
+                "weight_decay": trial.suggest_float(
+                    "optimizer.weight_decay",
+                    cfg.weight_decay.low,
+                    cfg.weight_decay.high,
+                    log=cfg.weight_decay.log,
+                ),
+            },
+        }
+
+    @staticmethod
+    def create(parameters, cfg):
+
+        return torch.optim.SGD(
+            parameters,
+            **cfg["params"],
+        )
+
+
+
+
+
+
 """
 for w.decay
 @staticmethod
@@ -97,43 +138,3 @@ weight_decay:
   high: 1.0e-3
   log: true
 """
-
-
-
-
-
-class SGDOptimizer(BaseOptimizer):
-
-    @staticmethod
-    def sample(trial, cfg):
-
-        return {
-            "name": "sgd",
-            "params": {
-                "lr": trial.suggest_float(
-                    "optimizer.lr",
-                    cfg.lr.low,
-                    cfg.lr.high,
-                    log=cfg.lr.log,
-                ),
-                "momentum": trial.suggest_float(
-                    "optimizer.momentum",
-                    cfg.momentum.low,
-                    cfg.momentum.high,
-                ),
-                "weight_decay": trial.suggest_float(
-                    "optimizer.weight_decay",
-                    cfg.weight_decay.low,
-                    cfg.weight_decay.high,
-                    log=cfg.weight_decay.log,
-                ),
-            },
-        }
-
-    @staticmethod
-    def create(parameters, cfg):
-
-        return torch.optim.SGD(
-            parameters,
-            **cfg["params"],
-        )

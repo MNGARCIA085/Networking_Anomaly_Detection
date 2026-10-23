@@ -31,7 +31,7 @@ windowing:
   stride: 1
 
 
-temporal_prep:
+temporal:
   delta:
     enable: false
     name: delta

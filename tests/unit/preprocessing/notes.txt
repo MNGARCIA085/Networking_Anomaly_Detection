@@ -1,0 +1,18 @@
+pytest tests/unit/preprocessing/ -v
+
+
+
+
+
+
+
+2. What each test is intended to verify
+Test	What it verifies	Why it matters
+test_fit_fits_pointwise_on_raw_data_and_temporal_on_windowed_data	Pointwise preprocessing fits on raw training data, while temporal preprocessing fits on the pointwise-transformed windows.	Protects the intended preprocessing order and prevents stages from fitting on the wrong representation.
+test_transform_applies_stages_in_pointwise_windowing_temporal_order	Transformation applies pointwise processing, then windowing, then temporal processing.	Ensures inference and evaluation receive data in the representation expected by the model.
+test_transform_does_not_refit_preprocessing_stages	Transforming validation data does not call fit again.	Helps prevent validation data from influencing fitted preprocessing parameters.
+test_transform_with_labels_keeps_labels_aligned_with_windows	Features and labels undergo consistent windowing, with a window marked anomalous if any sample inside it is anomalous.	Protects sample-to-label alignment and anomaly evaluation correctness.
+
+
+Important scope note
+These tests verify the orchestration contract using controlled stages. They do not prove that every real preprocessing component avoids data leakage; that should be covered by a smaller integration test using an actual fitted transformer, such as a scaler.

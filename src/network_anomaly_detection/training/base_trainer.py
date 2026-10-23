@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 
 class BaseTrainer(ABC):
 
-
-
     def __init__(self, model, cfg=None, checkpoint_dir=None):
         self.model = model
         self.cfg = cfg

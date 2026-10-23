@@ -1,5 +1,3 @@
-#from pathlib import Path
-
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import (
     EarlyStopping as LightningEarlyStopping,

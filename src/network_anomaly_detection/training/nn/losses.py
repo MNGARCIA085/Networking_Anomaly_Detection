@@ -16,14 +16,3 @@ def create_loss(cfg):
         **cfg.get("params", {})
     )
 
-
-
-
-"""
-
-def create_loss(cfg):
-
-    loss_cls = LOSS_REGISTRY[cfg.name]
-
-    return loss_cls()
-"""

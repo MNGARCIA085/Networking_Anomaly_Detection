@@ -14,8 +14,6 @@ class Experiment:
         )
 
 
-    
-
     def start(self, run_name=None, nested=False, parent_run_id=None):
         run = self.logger.start_run(
             run_name=run_name,
@@ -105,6 +103,7 @@ class Experiment:
                 run_name=run_name,
             )
 
+            self.finish() #
             return result
 
         except Exception as error:
