@@ -1,0 +1,70 @@
+
+############################
+############# CPU ##########
+############################
+
+
+1. TRAIN
+
+docker build \
+  --target train \
+  --build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu \
+  -t network-anomaly:train-cpu .
+
+
+docker run --rm -it \
+  -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/mlruns:/app/mlruns" \
+  network-anomaly:train-cpu
+
+
+NO mluns
+
+docker run --rm -it \
+  -v "$(pwd)/data:/app/data" \
+  network-anomaly:train-cpu
+
+
+
+
+2. INFERENCE
+
+docker build \
+  --target inference \
+  --build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu \
+  -t network-anomaly:inference-cpu .
+
+
+
+
+mount store and scripts
+
+docker run --rm -it \
+  -v "$(pwd)/mock_model_store:/app/mock_model_store:ro" \
+  -v "$(pwd)/scripts:/app/scripts:ro" \
+  -v "$(pwd)/data:/app/data:ro" \
+  network-anomaly:inference-cpu \
+  bash
+
+  python -m scripts.inference
+
+
+
+##############################
+############## GPU ###########
+##############################
+
+GPU
+
+docker build \
+  --target train \
+  --build-arg TORCH_INDEX_URL=<compatible-pytorch-cuda-index> \
+  -t network-anomaly:train-gpu .
+
+
+docker run --rm -it \
+  --gpus all \
+  -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/mlruns:/app/mlruns" \
+  -v "$(pwd)/mlflow.db:/app/mlflow.db" \
+  network-anomaly:train-gpu

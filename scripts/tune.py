@@ -1,13 +1,13 @@
 import hydra
+import mlflow
 from omegaconf import DictConfig, OmegaConf
 
 from network_anomaly_detection.data.data_module import DataModule
+from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
-
 from network_anomaly_detection.experiment.experiment import Experiment
 from network_anomaly_detection.tuning.tuner import Tuner
 from network_anomaly_detection.evaluation.evaluator import Evaluator
-    
 
 @hydra.main(
     config_path="../config",
@@ -15,106 +15,108 @@ from network_anomaly_detection.evaluation.evaluator import Evaluator
     version_base=None,
 )
 def main(cfg: DictConfig):
-
-
-    # omegaconf -> dict
     cfg = OmegaConf.to_container(cfg, resolve=True)
 
-    # --------------------------------------------------
-    # Data
-    # --------------------------------------------------
-
     data_module = DataModule(
-                train_path = "data/processed/v1/train.csv",
-                val_path = "data/processed/v1/val.csv",
-            )
+        train_path="data/processed/v1/train.csv",
+        val_path="data/processed/v1/val.csv",
+    )
     X_train, y_train, X_val, y_val = data_module.load_train_val()
 
-
-    # --------------------------------------------------
-    # Tuning
-    # --------------------------------------------------
     evaluator = Evaluator()
     logger = MLFlowLogger()
 
-    tuner = Tuner(
-            cfg,
-            evaluator,
-            logger,
-        )
+    #with logger.start_run(
+    #    run_name=f"{cfg['model_type']['name']}_tuning"
+    #):
+
+    with logger.start_run(run_name=f"{cfg['model_type']['name']}_tuning") as parent_run:
+        parent_run_id = parent_run.info.run_id
 
 
-    study = tuner.run(
-            X_train=X_train,
-            y_train=y_train,
-            X_val=X_val,
-            y_val=y_val,
-            n_trials=2,
-            n_jobs=2,
-        )
+        logger.log_tags({
+            "run_type": "tuning",
+            "status": "running",
+        })
+
+        try:
 
 
-    print(study)
+            # pass only what it needs
+            cfg.pop('paths', None)
 
 
-    #--------------------------------------#
-    print(
-        study.best_value
-    )
+            tuner = Tuner(cfg, evaluator, logger)
 
-    print(
-        study.best_params
-    )
+            study = tuner.run(
+                X_train=X_train,
+                y_train=y_train,
+                X_val=X_val,
+                y_val=y_val,
+                parent_run_id=parent_run_id,
+                n_trials=2,
+                n_jobs=2,
+            )
 
+            best_cfg = tuner.get_best_config(study)
+            best_trial = study.best_trial
+ 
+
+            mlflow.log_dict(
+                best_cfg,
+                artifact_file="best_config.json",
+            )
+
+            mlflow.log_metric("best_pr_auc", study.best_value)
+            mlflow.log_param("best_trial_number", best_trial.number)
+
+
+            logger.log_tags({"status": "finished"})
+
+
+        except Exception as error:
+            logger.log_tags({
+                "status": "failed",
+                "error": str(error),
+            })
+            raise
 
 
     # ========= Retrain best model ========= #
-    best_cfg = tuner.get_best_config(study)
+    print('\n Retrain with best model\n')
+    prep_cls = PREP_REGISTRY[best_cfg["model_type"]["name"]]
+    prep = prep_cls(best_cfg["model_type"]) # later pass more specific conf
 
-
-    print("\n\n\n\nBest config:")
-    print(best_cfg)
-
-
-    print('Training with best config')
-
-
-    experiment = Experiment(
-        cfg=best_cfg,
-        logger=logger,
+    X_train_selected, y_train_selected = (
+        prep.select_training_data(X_train, y_train)
     )
+    prep.fit(X_train_selected, y_train_selected)
 
 
-    evaluator = Evaluator()
-
-    # i have to create and fit my best prep
-
+    experiment = Experiment(cfg=best_cfg, logger=logger)
     result = experiment.run(
         prep=prep,
         evaluator=evaluator,
-        X_train=X_train,
-        y_train=y_train,
+        X_train=X_train_selected,
+        y_train=y_train_selected,
         X_val=X_val,
         y_val=y_val,
-        #run_name=f"{cfg.model_type.name}_tunned",
+        run_name="best_config_retrain",
     )
 
+    
+
+    print("Best value:", study.best_value)
+    print("Best parameters:", study.best_params)
+    print("Best config:", best_cfg)
 
 
     return
 
 
 
-
-
-
 if __name__ == "__main__":
     main()
-
-
-
-
-    
 
 
 

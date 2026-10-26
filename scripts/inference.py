@@ -10,21 +10,11 @@ from network_anomaly_detection.inference.loader import load_from_config
 
 def main():
 
-
-    #with open("mock_model_store/model_001/model/config.pkl", "r") as f:
-    #    config = json.load(f)
-
-
-    config = {
-      "model": {
-        "type": "ae",
-        "version": "v1",
-        "window_size": 1
-      }
-    }  
-
-
     model_dir = Path("mock_model_store/model_001")
+
+    config_path = model_dir / "manifest.json"
+    with config_path.open("r", encoding="utf-8") as f:
+        config = json.load(f)
 
     runner = load_from_config(
         config=config,
@@ -63,7 +53,7 @@ def main():
     # more realistic preds
     scores = runner.score(X_val)
     pred = runner.predict(X_val)
-    print(pred)
+    print('Preds with val ', pred)
 
 
     print("Threshold:", runner.thresholding.get_threshold())

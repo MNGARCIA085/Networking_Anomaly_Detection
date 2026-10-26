@@ -33,7 +33,7 @@ prep:
 
   windowing:
     size:
-      choices: [1, 5, 10, 20]
+      choices: [1, 3]
 
 
 

@@ -40,7 +40,7 @@ pointwise:
 
 
 windowing:
-  size: 5
+  size: 3
   stride: 1
 
 

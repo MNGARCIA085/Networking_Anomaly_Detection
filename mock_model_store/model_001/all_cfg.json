@@ -1,0 +1,325 @@
+{
+  "random_state": 42,
+  "experiment_name": "network_anomaly_detection",
+  "paths": {
+    "root_dir": ".",
+    "mlflow_db": "mlflow.db",
+    "mlflow_artifacts": "mlruns"
+  },
+  "tracking": {
+    "enabled": true
+  },
+  "model_type": {
+    "models": {
+      "encoder_dims": [
+        128,
+        64,
+        32,
+        16
+      ],
+      "decoder_dims": [
+        32,
+        64,
+        128
+      ]
+    },
+    "training": {
+      "batch_size": 32,
+      "epochs": 1,
+      "type": "default",
+      "optimizer": {
+        "name": "adam",
+        "params": {
+          "lr": 0.001,
+          "betas": [
+            0.9,
+            0.999
+          ],
+          "weight_decay": 0.0001
+        }
+      },
+      "loss": {
+        "name": "mse"
+      },
+      "scheduler": {
+        "name": "reduce_on_plateau",
+        "monitor": "val_loss",
+        "interval": "epoch",
+        "frequency": 1,
+        "params": {
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 5,
+          "min_lr": 1e-06
+        }
+      },
+      "callbacks": [
+        {
+          "name": "print_loss"
+        },
+        {
+          "name": "early_stopping",
+          "params": {
+            "patience": 15,
+            "monitor": "val_loss",
+            "mode": "min"
+          }
+        },
+        {
+          "name": "checkpoint",
+          "params": {
+            "every_n_epochs": 10,
+            "keep_last": 2,
+            "save_best": true,
+            "monitor": "val_loss",
+            "mode": "min"
+          }
+        }
+      ],
+      "num_workers": 1
+    },
+    "tuning": {
+      "random_state": 42,
+      "metric": "pr_auc",
+      "direction": "maximize",
+      "n_trials": 1,
+      "n_jobs": 2,
+      "prep": {
+        "pointwise": {
+          "imputation": {
+            "names": [
+              "simple"
+            ],
+            "strategy": {
+              "choices": [
+                "mean",
+                "median",
+                "most_frequent"
+              ]
+            }
+          },
+          "transform": {
+            "names": [
+              "power"
+            ],
+            "params": {
+              "method": {
+                "choices": [
+                  "yeo-johnson",
+                  "box-cox"
+                ]
+              },
+              "standardize": {
+                "choices": [
+                  true,
+                  false
+                ]
+              }
+            }
+          },
+          "scaler": {
+            "names": [
+              "standard",
+              "minmax"
+            ]
+          }
+        },
+        "windowing": {
+          "size": {
+            "choices": [
+              1,
+              3
+            ]
+          }
+        }
+      },
+      "model_space": {
+        "encoder_dims": {
+          "choices": [
+            [
+              128,
+              64,
+              16
+            ],
+            [
+              128,
+              32,
+              8
+            ],
+            [
+              64,
+              32,
+              8
+            ],
+            [
+              64,
+              16,
+              4
+            ]
+          ]
+        },
+        "decoder_dims": {
+          "choices": [
+            [
+              16,
+              64
+            ],
+            [
+              8,
+              32
+            ],
+            [
+              8,
+              32,
+              64
+            ]
+          ]
+        }
+      },
+      "training_space": {
+        "optimizer": {
+          "names": [
+            "adam",
+            "sgd"
+          ],
+          "adam": {
+            "lr": {
+              "low": 0.0001,
+              "high": 0.01,
+              "log": true
+            },
+            "betas": {
+              "choices": [
+                [
+                  0.9,
+                  0.999
+                ],
+                [
+                  0.8,
+                  0.999
+                ]
+              ]
+            }
+          },
+          "sgd": {
+            "lr": {
+              "low": 0.001,
+              "high": 0.1,
+              "log": true
+            },
+            "momentum": {
+              "low": 0.0,
+              "high": 0.9
+            },
+            "weight_decay": {
+              "low": 1e-06,
+              "high": 0.01,
+              "log": true
+            }
+          }
+        },
+        "callbacks": {
+          "print_loss": true,
+          "early_stopping": {
+            "enabled": true,
+            "patience": {
+              "low": 3,
+              "high": 10
+            }
+          }
+        },
+        "epochs": {
+          "name": "epochs",
+          "type": "int",
+          "low": 1,
+          "high": 3
+        },
+        "batch_size": {
+          "name": "batch_size",
+          "type": "categorical",
+          "choices": [
+            32,
+            64
+          ]
+        }
+      },
+      "thresholding": {
+        "name": "constrained_f1",
+        "params": {
+          "min_recall": 0.75
+        }
+      }
+    },
+    "prep": {
+      "pointwise": {
+        "imputation": {
+          "enabled": true,
+          "name": "simple",
+          "params": {
+            "strategy": "median"
+          }
+        },
+        "feature_selection": {
+          "enabled": false,
+          "name": "variance_threshold",
+          "params": {
+            "threshold": 0.0
+          }
+        },
+        "scaler": {
+          "enabled": true,
+          "name": "standard",
+          "params": {
+            "with_mean": true,
+            "with_std": true
+          }
+        },
+        "transform": {
+          "enabled": false,
+          "name": "power",
+          "params": {
+            "method": "yeo-johnson",
+            "standardize": false
+          }
+        }
+      },
+      "windowing": {
+        "size": 3,
+        "stride": 1
+      },
+      "temporal": {
+        "delta": {
+          "enable": false,
+          "name": "delta",
+          "params": {
+            "order": 1
+          }
+        },
+        "rolling": {
+          "enabled": false,
+          "name": "rolling_stats",
+          "params": {
+            "window": 5
+          }
+        }
+      }
+    },
+    "thresholding": {
+      "name": "constrained_f1",
+      "params": {
+        "min_recall": 0.75
+      }
+    },
+    "name": "ae"
+  },
+  "data": {
+    "raw_path": "data/raw/data.csv",
+    "processed_dir": "data/processed/v1",
+    "label_column": "Label",
+    "split": {
+      "train_size": 0.7,
+      "val_size": 0.15,
+      "test_size": 0.15
+    }
+  }
+}
