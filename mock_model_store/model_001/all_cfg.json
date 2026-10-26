@@ -1,11 +1,6 @@
 {
   "random_state": 42,
   "experiment_name": "network_anomaly_detection",
-  "paths": {
-    "root_dir": ".",
-    "mlflow_db": "mlflow.db",
-    "mlflow_artifacts": "mlruns"
-  },
   "tracking": {
     "enabled": true
   },
@@ -14,13 +9,11 @@
       "encoder_dims": [
         128,
         64,
-        32,
         16
       ],
       "decoder_dims": [
-        32,
-        64,
-        128
+        16,
+        64
       ]
     },
     "training": {
@@ -30,12 +23,11 @@
       "optimizer": {
         "name": "adam",
         "params": {
-          "lr": 0.001,
+          "lr": 0.003651811083066971,
           "betas": [
             0.9,
             0.999
-          ],
-          "weight_decay": 0.0001
+          ]
         }
       },
       "loss": {
@@ -55,24 +47,13 @@
       },
       "callbacks": [
         {
-          "name": "print_loss"
+          "name": "print_loss",
+          "params": {}
         },
         {
           "name": "early_stopping",
           "params": {
-            "patience": 15,
-            "monitor": "val_loss",
-            "mode": "min"
-          }
-        },
-        {
-          "name": "checkpoint",
-          "params": {
-            "every_n_epochs": 10,
-            "keep_last": 2,
-            "save_best": true,
-            "monitor": "val_loss",
-            "mode": "min"
+            "patience": 5
           }
         }
       ],
@@ -256,7 +237,7 @@
           "enabled": true,
           "name": "simple",
           "params": {
-            "strategy": "median"
+            "strategy": "most_frequent"
           }
         },
         "feature_selection": {
@@ -268,18 +249,15 @@
         },
         "scaler": {
           "enabled": true,
-          "name": "standard",
-          "params": {
-            "with_mean": true,
-            "with_std": true
-          }
+          "name": "minmax",
+          "params": {}
         },
         "transform": {
-          "enabled": false,
+          "enabled": true,
           "name": "power",
           "params": {
-            "method": "yeo-johnson",
-            "standardize": false
+            "method": "box-cox",
+            "standardize": true
           }
         }
       },

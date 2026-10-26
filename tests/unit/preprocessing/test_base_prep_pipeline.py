@@ -41,10 +41,8 @@ def test_fit_fits_pointwise_on_raw_data_and_temporal_on_windowed_data():
 
     prep.fit(X)
 
-    # Pointwise preprocessing is fitted before windowing.
     np.testing.assert_array_equal(prep.pointwise.fit_inputs[0], X)
 
-    # Temporal preprocessing is fitted on pointwise-transformed windows.
     expected_temporal_input = np.array([[[2], [3]], [[3], [4]]])
     np.testing.assert_array_equal(
         prep.temporal.fit_inputs[0],
@@ -59,7 +57,6 @@ def test_transform_applies_stages_in_pointwise_windowing_temporal_order():
     prep.fit(X)
     result = prep.transform(X)
 
-    # First add 1, then create windows of length 2, then multiply by 2.
     expected = np.array([[[4], [6]], [[6], [8]]])
     np.testing.assert_array_equal(result, expected)
 
@@ -87,10 +84,9 @@ def test_transform_with_labels_keeps_labels_aligned_with_windows():
     prep.fit(X, y)
     X_windows, y_windows = prep.transform_with_labels(X, y)
 
-    # A window is anomalous if any point within it is anomalous.
-    expected_y = np.array([0, 1, 1])
+    # Each window inherits the label of its final observation.
+    expected_y = np.array([0, 1, 0])
 
-    # Each window is transformed in the same stage order.
     expected_X = np.array(
         [
             [[4], [6]],

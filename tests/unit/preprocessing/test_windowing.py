@@ -33,7 +33,7 @@ def test_transform_creates_correct_windows_and_stride():
     np.testing.assert_array_equal(result, expected)
 
 
-def test_transform_with_labels_marks_window_anomalous_if_any_point_is_anomalous():
+def test_default_strategy_is_last():
     X = np.arange(8).reshape(4, 2)
     y = np.array([0, 0, 1, 0])
 
@@ -48,7 +48,51 @@ def test_transform_with_labels_marks_window_anomalous_if_any_point_is_anomalous(
     ])
 
     np.testing.assert_array_equal(X_windows, expected_X)
+    np.testing.assert_array_equal(y_windows, [0, 1, 0])
+
+
+def test_last_strategy_uses_final_observation_label():
+    X = np.arange(8).reshape(4, 2)
+    y = np.array([1, 0, 0, 1])
+
+    windowing = Windowing(seq_len=3, strategy="last")
+
+    _, y_windows = windowing.transform(X, y)
+
+    np.testing.assert_array_equal(y_windows, [0, 1])
+
+
+def test_any_strategy_marks_window_positive_if_any_point_is_anomalous():
+    X = np.arange(8).reshape(4, 2)
+    y = np.array([0, 0, 1, 0])
+
+    windowing = Windowing(seq_len=2, strategy="any")
+
+    _, y_windows = windowing.transform(X, y)
+
     np.testing.assert_array_equal(y_windows, [0, 1, 1])
+
+
+@pytest.mark.parametrize(
+    "y, expected",
+    [
+        ([0, 0, 0], 0),  # No anomalies
+        ([1, 1, 0], 1),  # Majority anomalous
+        ([1, 0, 0], 0),  # Minority anomalous
+        ([1, 0, 1, 0], 0),  # Tie: negative
+    ],
+)
+def test_majority_strategy(y, expected):
+    X = np.arange(len(y)).reshape(-1, 1)
+
+    windowing = Windowing(
+        seq_len=len(y),
+        strategy="majority",
+    )
+
+    _, y_windows = windowing.transform(X, np.array(y))
+
+    np.testing.assert_array_equal(y_windows, [expected])
 
 
 def test_seq_len_one_preserves_individual_samples():
@@ -78,6 +122,11 @@ def test_seq_len_one_preserves_individual_samples():
 def test_invalid_window_parameters_raise_value_error(seq_len, stride):
     with pytest.raises(ValueError):
         Windowing(seq_len=seq_len, stride=stride)
+
+
+def test_invalid_strategy_raises_value_error():
+    with pytest.raises(ValueError, match="Unknown strategy"):
+        Windowing(seq_len=3, strategy="invalid")
 
 
 def test_transform_rejects_input_with_wrong_dimensions():
@@ -114,3 +163,4 @@ def test_transform_rejects_multidimensional_labels():
 
     with pytest.raises(ValueError, match="Expected y"):
         windowing.transform(X, y)
+

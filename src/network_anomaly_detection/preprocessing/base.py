@@ -87,15 +87,10 @@ class BasePrep():
 
     # Not model-specific, win_size=1 means no actual windowing.
     def build_windowing(self, cfg):
-        """
         return Windowing(
-            cfg.size,
-            cfg.stride,
-        )
-        """
-        return Windowing(
-            cfg["size"],
-            cfg["stride"],
+            seq_len=cfg["size"],
+            stride=cfg["stride"],
+            strategy=cfg.get("strategy", "last"),
         )
 
 

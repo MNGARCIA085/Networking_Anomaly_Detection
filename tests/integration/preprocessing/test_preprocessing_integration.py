@@ -4,7 +4,13 @@ import pytest
 from network_anomaly_detection.preprocessing.base import BasePrep
 
 
-def make_cfg(*, window_size=1, stride=1, delta_enabled=False):
+def make_cfg(
+    *,
+    window_size=1,
+    stride=1,
+    strategy="last",
+    delta_enabled=False,
+):
     return {
         "prep": {
             "pointwise": {
@@ -38,6 +44,7 @@ def make_cfg(*, window_size=1, stride=1, delta_enabled=False):
             "windowing": {
                 "size": window_size,
                 "stride": stride,
+                "strategy": strategy,
             },
             "temporal": {
                 "delta": {
@@ -66,14 +73,12 @@ def test_real_imputer_and_scaler_fit_on_training_data_only():
     prep = BasePrep(make_cfg())
     prep.fit(X_train)
 
-    # Capture fitted parameters before transforming validation data.
     scaler = prep.pointwise_prep.steps[-1]
     train_mean = scaler.mean_.copy()
     train_scale = scaler.scale_.copy()
 
     X_val_transformed = prep.transform(X_val)
 
-    # Validation transformation must not refit the scaler.
     np.testing.assert_array_equal(scaler.mean_, train_mean)
     np.testing.assert_array_equal(scaler.scale_, train_scale)
 
@@ -95,7 +100,6 @@ def test_pointwise_preprocessing_and_windowing_preserve_expected_shape():
 
     X_transformed = prep.transform(X_train)
 
-    # Five samples, window length three, stride one -> three windows.
     assert X_transformed.shape == (3, 3, 2)
     assert np.isfinite(X_transformed).all()
 
@@ -116,8 +120,36 @@ def test_transform_with_labels_keeps_window_labels_aligned():
     X_windows, y_windows = prep.transform_with_labels(X_train, y_train)
 
     assert X_windows.shape == (3, 3, 2)
-    np.testing.assert_array_equal(y_windows, [1, 1, 1])
+    np.testing.assert_array_equal(y_windows, [1, 0, 0])
     assert len(X_windows) == len(y_windows)
+
+
+@pytest.mark.parametrize(
+    "strategy, expected",
+    [
+        ("last", [1, 0, 0]),
+        ("any", [1, 1, 1]),
+        ("majority", [0, 0, 0]),
+    ],
+)
+def test_transform_with_labels_respects_configured_strategy(strategy, expected):
+    X_train = np.array([
+        [1.0, 10.0],
+        [2.0, 20.0],
+        [3.0, 30.0],
+        [4.0, 40.0],
+        [5.0, 50.0],
+    ])
+    y_train = np.array([0, 0, 1, 0, 0])
+
+    prep = BasePrep(
+        make_cfg(window_size=3, stride=1, strategy=strategy)
+    )
+    prep.fit(X_train, y_train)
+
+    _, y_windows = prep.transform_with_labels(X_train, y_train)
+
+    np.testing.assert_array_equal(y_windows, expected)
 
 
 def test_save_and_reload_preserves_fitted_transformations(tmp_path):
@@ -144,16 +176,3 @@ def test_save_and_reload_preserves_fitted_transformations(tmp_path):
     actual = loaded.transform(X_val)
 
     np.testing.assert_allclose(actual, expected)
-
-
-
-
-
-"""
-| Test | Purpose |
-|---|---|
-| `test_real_imputer_and_scaler_fit_on_training_data_only` | Verifies that actual sklearn preprocessing components work together and validation data does not change fitted scaler parameters. |
-| `test_pointwise_preprocessing_and_windowing_preserve_expected_shape` | Verifies the output dimensions when real pointwise preprocessing feeds into windowing. |
-| `test_transform_with_labels_keeps_window_labels_aligned` | Verifies that the integration preserves the window-label aggregation semantics. |
-| `test_save_and_reload_preserves_fitted_transformations` | Verifies that a serialized, fitted preprocessing object can be loaded and reused without changing its results. |
-"""

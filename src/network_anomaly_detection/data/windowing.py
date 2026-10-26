@@ -4,15 +4,27 @@ import numpy as np
 
 class Windowing:
 
-    def __init__(self, seq_len: int, stride: int = 1):
+    def __init__(
+        self,
+        seq_len: int,
+        stride: int = 1,
+        strategy: str = "last",
+    ):
         if seq_len < 1:
             raise ValueError("seq_len must be >= 1")
 
         if stride < 1:
             raise ValueError("stride must be >= 1")
 
+        if strategy not in {"last", "any", "majority"}:
+            raise ValueError(
+                f"Unknown strategy '{strategy}'. "
+                "Choose from: 'last', 'any', 'majority'"
+            )
+
         self.seq_len = seq_len
         self.stride = stride
+        self.strategy = strategy
 
     def _get_starts(self, n_samples):
         if n_samples < self.seq_len:
@@ -27,9 +39,18 @@ class Windowing:
             self.stride,
         )
 
+    def _label_window(self, y_window):
+        if self.strategy == "last":
+            return y_window[-1]
 
+        if self.strategy == "any":
+            return int(np.any(y_window == 1))
 
-    def transform(self, X, y=None): # y is opional for inference
+        # Majority: positive only if more than half are anomalous.
+        return int(np.mean(y_window == 1) > 0.5)
+
+    def transform(self, X, y=None):
+        """Create temporal windows and optionally their labels."""
         X = np.asarray(X)
 
         if X.ndim != 2:
@@ -53,25 +74,20 @@ class Windowing:
 
         starts = self._get_starts(len(X))
 
-        X_windows = []
-        y_windows = []
-
-        for i in starts:
-            X_windows.append(X[i:i + self.seq_len])
-
-            if y is not None:
-                # Window is anomalous if any point is anomalous
-                y_windows.append(
-                    int(np.any(y[i:i + self.seq_len] == 1))
-                )
-
-        X_windows = np.stack(X_windows)
+        X_windows = np.stack([
+            X[i:i + self.seq_len]
+            for i in starts
+        ])
 
         if y is None:
             return X_windows
 
-        return X_windows, np.asarray(y_windows)
+        y_windows = np.asarray([
+            self._label_window(y[i:i + self.seq_len])
+            for i in starts
+        ])
 
+        return X_windows, y_windows
 
     def save(self, path):
         joblib.dump(self, path)
@@ -79,3 +95,10 @@ class Windowing:
     @classmethod
     def load(cls, path):
         return joblib.load(path)
+
+
+"""
+windowing = Windowing(seq_len=20, stride=1, strategy="last")
+windowing = Windowing(seq_len=20, strategy="any")
+windowing = Windowing(seq_len=20, strategy="majority")
+"""
