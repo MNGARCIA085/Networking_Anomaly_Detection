@@ -122,3 +122,14 @@ class AEModel(BaseModel):
         instance.model = load_torch_model(AE, path)
 
         return instance
+
+
+    #---------config------------#
+    def get_config(self): # later put as abstract in the base class!!!!!
+        return {
+            "model_type": "ae",
+            "input_shape": list(self.input_shape),
+            "input_dim": self.model.config.input_dim,
+            "encoder_dims": list(self.model.config.encoder_dims),
+            "decoder_dims": list(self.model.config.decoder_dims),
+        }

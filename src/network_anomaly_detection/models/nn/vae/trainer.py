@@ -31,7 +31,27 @@ class VAELightningModule(AnomalyLightningModule):
 
         self.beta = beta
 
+
+    def _compute_loss(self, batch):
+        X, _ = batch
+
+        recon, mu, logvar = self.model(X)
+
+        recon_loss = F.mse_loss(
+            recon,
+            X,
+            reduction="mean",
+        )
+
+        kl_loss = -0.5 * torch.mean(
+            1 + logvar - mu.pow(2) - logvar.exp()
+        )
+
+        return recon_loss + self.beta * kl_loss
+
     
+
+    """
     def _compute_loss(self, batch):
         X, _ = batch
 
@@ -48,6 +68,7 @@ class VAELightningModule(AnomalyLightningModule):
         )
 
         return recon_loss + self.model.config.beta * kl_loss
+    """
 
 
 
@@ -89,6 +110,36 @@ class VAETrainer(NNTrainer):
         )
 
         self.module.beta = model.model.config.beta
+
+
+        self.training_config = {
+            "trainer_type": self.__class__.__name__,
+            "epochs": cfg["epochs"],
+            "batch_size": cfg["batch_size"],
+            "num_workers": cfg.get("num_workers", 0),
+            "optimizer": {
+                "name": optimizer.__class__.__name__,
+                "params": optimizer.defaults.copy(),
+            },
+            "loss": {
+                "name": "vae_loss",
+                "reconstruction": {
+                    "name": "MSELoss",
+                    "reduction": "mean",
+                },
+                "kl_divergence": {
+                    "name": "kl_divergence",
+                    "reduction": "mean",
+                },
+                "beta": self.module.beta,
+            },
+            "scheduler": cfg.get("scheduler"),
+            "callbacks": cfg.get("callbacks", {}),
+        }
+
+    def get_config(self):
+        return self.training_config
+
 
 
 

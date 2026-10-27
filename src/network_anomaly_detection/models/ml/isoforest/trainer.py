@@ -12,3 +12,6 @@ class IsoForestTrainer(BaseTrainer):
     ):
         self.model.fit(X)
         return self
+
+    def get_config(self):
+        return None

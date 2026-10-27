@@ -24,8 +24,11 @@ class BaseModel(ABC):
         scores = self.score(X)
         return scores >= threshold
 
+
+
+    @abstractmethod
+    def get_config(self):
+        """ raise not implemented.... """
+        pass
     
 
-    """
-    save method
-    """

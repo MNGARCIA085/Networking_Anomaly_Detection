@@ -44,24 +44,38 @@ class AETrainer(NNTrainer):
             cfg=trainer_cfg,
         )
 
+        # config
+        self.training_config = {
+            "trainer_type": self.__class__.__name__,
+            "epochs": cfg["epochs"],
+            "batch_size": cfg["batch_size"],
+            "num_workers": cfg.get("num_workers", 0),
+            "optimizer": {
+                "name": cfg["optimizer"]["name"],
+                "params": optimizer.defaults,
+            },
+            "loss": {
+                "name": cfg["loss"]["name"],
+                "params": cfg["loss"].get("params", {}),
+            },
+            "scheduler": cfg.get("scheduler"),
+            "callbacks": cfg.get("callbacks", {}),
+        }
+
+    def get_config(self):
+        return self.training_config
+
+
+
+
+
 
 
 """
-class VAELightningModule(AnomalyLightningModule):
+prep -> put imputation; sclaer before....
 
-    def _compute_loss(self, batch):
-        X, y = batch
-
-        recon, mu, logvar = self.model(X)
-
-        reconstruction_loss = self.criterion(recon, X)
-
-        kl_loss = -0.5 * torch.mean(
-            1 + logvar - mu.pow(2) - logvar.exp()
-        )
-
-        return reconstruction_loss + kl_loss
 """
+
 
 
 

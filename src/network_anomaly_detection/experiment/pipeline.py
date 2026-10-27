@@ -110,12 +110,6 @@ class ExperimentPipeline:
             "random_state": cfg["random_state"],
         })
 
-        # config
-        mlflow.log_dict(
-            cfg,
-            artifact_file="all_cfg.json",
-        )
-
         # metadata
         self.logger.log_tags(metadata)
 
@@ -123,6 +117,12 @@ class ExperimentPipeline:
         X_train, y_train = prep.transform_with_labels(X_train, y_train)
         X_val, y_val = prep.transform_with_labels(X_val, y_val)
         self.logger.save_prep(prep)
+
+
+        mlflow.log_dict(
+            prep.get_config(),
+            artifact_file="prep_config.json",
+        )
 
 
         # Keep the full validation set; derive a separate subset for training callbacks.
@@ -142,9 +142,15 @@ class ExperimentPipeline:
         )
         X_train = model.adapt_input(X_train)
         X_val = model.adapt_input(X_val)
+        X_val_train = model.adapt_input(X_val_train) # early stopping for aes
+                    # with only normal data
 
 
-        X_val_train = model.adapt_input(X_val_train) # new!!!
+        mlflow.log_dict(
+            model.get_config(),
+            artifact_file="model_config.json",
+        )
+
 
         # Trainer; the trainer owns the framework-specific training details.
         trainer = build_trainer(
@@ -153,6 +159,14 @@ class ExperimentPipeline:
             checkpoint_dir=self.logger.checkpoint_dir(),
         )
         trainer.fit(X_train, y_train, X_val_train, y_val_train)
+
+
+
+        mlflow.log_dict(
+            trainer.get_config(),
+            artifact_file="trainer_config.json",
+        )
+
 
         # Evaluation
         evaluation = self._evaluate(
@@ -167,6 +181,19 @@ class ExperimentPipeline:
         thresholding = evaluation["thresholding"]
         threshold = evaluation["threshold"]
         metrics = evaluation["metrics"]
+
+
+
+        
+        mlflow.log_dict(
+            thresholding.get_config(),
+            "threshold_config.json",
+        )
+
+        # threshold log as metric?
+
+
+
 
         self.logger.log_metrics(metrics)
 

@@ -74,3 +74,13 @@ class AEIsolationForestModel(BaseModel):
         instance.isoforest = IsoForestModel.load(path / "isoforest")
 
         return instance
+
+
+    #---------config-----------#
+    def get_config(self):
+        return {
+            "model_type": "ae_isolation_forest",
+            "input_shape": list(self.input_shape),
+            "ae": self.ae.get_config(),
+            "isoforest": self.isoforest.get_config(),
+        }

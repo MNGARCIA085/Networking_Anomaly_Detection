@@ -15,6 +15,11 @@ class ThresholdStrategy(ABC):
         pass
 
 
+    @abstractmethod
+    def get_config(self):
+        pass
+
+
 
 """
 Thresholding

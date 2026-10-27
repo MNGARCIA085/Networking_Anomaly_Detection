@@ -62,3 +62,16 @@ class AEIsolationForestTrainer:
         self.model.fit_detector(X_train)
 
         return self.model
+
+
+
+    def get_config(self):
+        return {
+            "trainer_type": self.__class__.__name__,
+            "ae_training": self.ae_trainer.get_config()
+            if self.ae_trainer is not None
+            else None,
+            "detector": {
+                "name": "IsolationForest",
+            },
+        }

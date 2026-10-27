@@ -155,3 +155,17 @@ class VAEModel(BaseModel):
         instance.model = load_torch_model(VAE, path)
 
         return instance
+
+
+    #-------------config----------------#
+    def get_config(self):
+        cfg = self.model.config
+
+        return {
+            "model_type": "vae",
+            "input_shape": list(self.input_shape),
+            "input_dim": cfg.input_dim,
+            "encoder_dims": list(cfg.encoder_dims),
+            "decoder_dims": list(cfg.decoder_dims),
+            "latent_dim": cfg.latent_dim,
+        }

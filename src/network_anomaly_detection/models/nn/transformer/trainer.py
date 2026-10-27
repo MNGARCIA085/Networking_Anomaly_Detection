@@ -43,3 +43,25 @@ class TransformerTrainer(NNTrainer):
             model=model.model,
             cfg=trainer_cfg,
         )
+
+
+        # config
+        self.training_config = {
+            "trainer_type": self.__class__.__name__,
+            "epochs": cfg["epochs"],
+            "batch_size": cfg["batch_size"],
+            "num_workers": cfg.get("num_workers", 0),
+            "optimizer": {
+                "name": cfg["optimizer"]["name"],
+                "params": optimizer.defaults,
+            },
+            "loss": {
+                "name": cfg["loss"]["name"],
+                "params": cfg["loss"].get("params", {}),
+            },
+            "scheduler": cfg.get("scheduler"),
+            "callbacks": cfg.get("callbacks", {}),
+        }
+
+    def get_config(self):
+        return self.training_config

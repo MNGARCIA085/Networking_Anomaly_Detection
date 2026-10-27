@@ -80,3 +80,12 @@ class ConstrainedF1Threshold(ThresholdStrategy):
             )
 
         return self.threshold
+
+    #------config------#
+    def get_config(self):
+        return {
+            "name": "constrained_f1",
+            "params": {
+                "min_recall": self.min_recall,
+            },
+        }

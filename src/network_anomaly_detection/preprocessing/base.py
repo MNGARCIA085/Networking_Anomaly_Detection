@@ -27,6 +27,10 @@ class BasePrep():
         self.windowing = None
         self.temporal_prep = None
 
+        self.pointwise_config = None 
+        self.windowing_config = None
+        self.temporal_config = None
+
 
 
     # Pointwise prep
@@ -36,6 +40,7 @@ class BasePrep():
             return None
 
         steps = []
+        config = []
 
         # 1. Imputer
         imputer_cfg = cfg.get("imputation", {})
@@ -46,6 +51,13 @@ class BasePrep():
                 **imputer_cfg.get("params", {}),
             )
             steps.append(imputer)
+
+            config.append({
+                "Imputer": {
+                    "name": imputer_cfg["name"],
+                    "params": imputer_cfg.get("params", {}),
+                }
+            })
 
 
         # 2. Feature Selection -> Var. threshold (before scaling)
@@ -59,6 +71,11 @@ class BasePrep():
                 )
                 steps.append(selector)
 
+                config.append({
+                        "name": feat_sel_cfg["name"],
+                        "params": feat_sel_cfg.get("params", {}),
+                })
+
 
         # 3. Scaler
         scaler_cfg = cfg["scaler"]
@@ -70,6 +87,13 @@ class BasePrep():
 
         steps.append(scaler)
 
+        config.append({
+            "scaler": {
+                "name": scaler_cfg["name"],
+                "params": scaler_cfg.get("params", {}),
+            }
+        })
+
 
         # 4. Feature Selection -> PCA (after scaling)
         if feat_sel_cfg.get("enabled", False):
@@ -79,6 +103,16 @@ class BasePrep():
                     **feat_sel_cfg.get("params", {}),
                 )
                 steps.append(selector)
+
+
+            config.append({
+                "name": feat_sel_cfg["name"],
+                "params": feat_sel_cfg.get("params", {}),
+            })
+
+
+
+        self.pointwise_config = config
         
 
         return PreprocessingPipeline(steps)
@@ -87,6 +121,14 @@ class BasePrep():
 
     # Not model-specific, win_size=1 means no actual windowing.
     def build_windowing(self, cfg):
+
+        self.windowing_config = {
+            "size": cfg["size"],
+            "stride": cfg["stride"],
+            "strategy": cfg.get("strategy", "last"),
+        }
+
+
         return Windowing(
             seq_len=cfg["size"],
             stride=cfg["stride"],
@@ -101,6 +143,7 @@ class BasePrep():
             return None
 
         steps = []
+        config = []
 
         # Delta transform
         delta_cfg = cfg.get("delta")
@@ -111,6 +154,14 @@ class BasePrep():
                 **delta_cfg.get("params", {}),
             )
             steps.append(delta)
+
+            config.append({
+                "name": delta_cfg["name"],
+                "params": delta_cfg.get("params", {}),
+            })
+
+
+        self.temporal_config = config
 
         return PreprocessingPipeline(steps)
 
@@ -210,6 +261,38 @@ class BasePrep():
     @classmethod
     def load(cls, path):
         return joblib.load(path)
+
+
+
+    #----------- save prep config for logging------------#
+    def get_config(self):
+        """Return the effective configuration of built preprocessing stages."""
+
+        return {
+            "pointwise": self.pointwise_config,
+            "windowing": self.windowing_config,
+            "temporal": self.temporal_config,
+    }
+
+
+
+"""
+This assumes your PreprocessingPipeline follows the usual scikit-learn convention 
+of storing named steps in pipeline.steps
+
+
+Your custom components, such as Windowing and your delta transformer, might not 
+implement get_params().
+
+You have two options:
+- Preferred: implement get_params() for your custom components, 
+following the scikit-learn convention
+
+
+"""
+
+
+
 
 
 

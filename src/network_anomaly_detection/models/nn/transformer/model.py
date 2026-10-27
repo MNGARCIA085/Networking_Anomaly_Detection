@@ -13,21 +13,7 @@ from network_anomaly_detection.models.persistence.torch import (
 )
 
 
-# ============================================================
-# Configuration
-# ============================================================
-
-from dataclasses import dataclass
-
-@dataclass
-class TransformerAEConfig:
-    input_dim: int
-    seq_len: int
-    d_model: int = 64
-    nhead: int = 4
-    dim_feedforward: int = 128
-    num_encoder_layers: int = 2
-    dropout: float = 0.1
+from .schemas import TransformerAEConfig
 
 
 # ============================================================
@@ -181,3 +167,20 @@ class TransformerAEModel(BaseModel):
         instance.model = load_torch_model(TransformerAE, path)
 
         return instance
+
+
+    #------get config----------#
+    def get_config(self):
+        cfg = self.model.config
+
+        return {
+            "model_type": "transformer_ae",
+            "input_shape": list(self.input_shape),
+            "input_dim": cfg.input_dim,
+            "seq_len": cfg.seq_len,
+            "d_model": cfg.d_model,
+            "nhead": cfg.nhead,
+            "dim_feedforward": cfg.dim_feedforward,
+            "num_encoder_layers": cfg.num_encoder_layers,
+            "dropout": cfg.dropout,
+        }

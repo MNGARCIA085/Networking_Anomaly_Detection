@@ -45,3 +45,11 @@ class Thresholding:
     def load(cls, path):
 
         return joblib.load(path)
+
+
+    #-----------config-------------#
+    def get_config(self):
+        if self.strategy is None:
+            return None
+
+        return self.strategy.get_config()
