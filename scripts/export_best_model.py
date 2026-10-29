@@ -61,29 +61,30 @@ def main(cfg: DictConfig) -> None:
 
     print(f"Artifacts downloaded to: {downloaded_path}")
 
-    # Read the run's parameters to identify the model type.
+    # Keep only the artifacts required for inference.
+    required_dirs = {"model", "preprocessing", "thresholding"}
+
+    for path in model_dir.iterdir():
+        if path.is_dir() and path.name in required_dirs:
+            continue
+
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+
+    # Read the run's tags to identify the model type.
     run = mlflow.get_run(run_id)
-    #model_type = run.data.params.get("model_type", "unknown")
     model_type = run.data.tags.get("model_type", "unknown")
 
-    # Write a manifest for the exported model.
+    # Write the manifest.
     manifest = {
-      "model": {
-        "type": model_type,
-        "version": "v1",
-        "run_id": run_id,
-      }
-    }
-    """
-    manifest = {
-        "model_id": "model_001",
-        "run_id": run_id,
         "model": {
             "type": model_type,
             "version": "v1",
-        },
+            "run_id": run_id,
+        }
     }
-    """
 
     manifest_path = model_dir / "manifest.json"
 
@@ -93,9 +94,6 @@ def main(cfg: DictConfig) -> None:
     print(f"Manifest saved to: {manifest_path}")
     print(f"Model bundle exported to: {model_dir}")
 
-
-    #
-    # later -> exclued diagmnostics and all_cfg!!!!!
 
 
 if __name__ == "__main__":

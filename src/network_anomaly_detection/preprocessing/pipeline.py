@@ -7,8 +7,6 @@ class PreprocessingPipeline:
 
     def __init__(self, steps):
         self.steps = steps
-
-
     
     def fit(self, X):
         for step in self.steps:

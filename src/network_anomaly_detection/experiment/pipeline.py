@@ -184,11 +184,11 @@ class ExperimentPipeline:
 
 
 
-        
-        mlflow.log_dict(
-            thresholding.get_config(),
-            "threshold_config.json",
-        )
+        if thresholding:
+            mlflow.log_dict(
+                thresholding.get_config(),
+                "threshold_config.json",
+            )
 
         # threshold log as metric?
 

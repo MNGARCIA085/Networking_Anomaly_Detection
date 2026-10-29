@@ -12,6 +12,13 @@ class FakePrep:
         self.transform_calls = []
         self.selection_calls = []
 
+    def get_config(self):
+        return {
+            "pointwise": {"scaler": "standard"},
+            "windowing": {"size": 1, "strategy": "last"},
+            "temporal": None,
+        }
+
     def transform_with_labels(self, X, y):
         self.transform_calls.append((X.copy(), y.copy()))
         return X, y
@@ -25,6 +32,9 @@ class FakePrep:
 class FakeModel:
     def __init__(self):
         self.adapted_shapes = []
+
+    def get_config(self):
+        return {"name": "fake_model"}
 
     def adapt_input(self, X):
         self.adapted_shapes.append(X.shape)
@@ -45,8 +55,12 @@ class FakeTrainer:
         self.fit_args = None
         self.history = {"train_loss": [0.5], "val_loss": [0.4]}
 
+    def get_config(self):
+        return {"name": "fake_trainer"}
+
     def fit(self, X_train, y_train, X_val, y_val):
         self.fit_args = (X_train, y_train, X_val, y_val)
+
 
 
 @pytest.fixture
@@ -61,14 +75,18 @@ def pipeline(monkeypatch):
             "name": "fake_model",
             "models": {},
             "training": {},
-            "thresholding": None,
-        },
+            "thresholding": {
+                "name": "constrained_f1",
+                "params": {"min_recall": 0.5},
+            },
+        }
     }
 
     pipeline = ExperimentPipeline(cfg=cfg, logger=Mock())
     prep = FakePrep()
     model = FakeModel()
     trainer = FakeTrainer()
+
 
     monkeypatch.setattr(
         pipeline_module,

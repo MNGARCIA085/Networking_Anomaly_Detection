@@ -26,9 +26,6 @@ def main(cfg: DictConfig):
     evaluator = Evaluator()
     logger = MLFlowLogger()
 
-    #with logger.start_run(
-    #    run_name=f"{cfg['model_type']['name']}_tuning"
-    #):
 
     with logger.start_run(run_name=f"{cfg['model_type']['name']}_tuning") as parent_run:
         parent_run_id = parent_run.info.run_id
@@ -40,7 +37,6 @@ def main(cfg: DictConfig):
         })
 
         try:
-
 
             # pass only what it needs
             cfg.pop('paths', None)

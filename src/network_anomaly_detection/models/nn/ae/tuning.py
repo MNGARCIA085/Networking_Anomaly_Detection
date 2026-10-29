@@ -39,13 +39,8 @@ def sample_dimensions(trial, cfg):
 class AESampler:
 
     def __init__(self, base_cfg, tuning_cfg):
-        # ill replace base_cfg with tuning_cfg appropiately
-
+        """ Replace base_cfg with tuning_cfg appropiately """
         self.base_cfg = deepcopy(base_cfg)
-
-        #self.tuning_cfg = (
-        #    base_cfg["model_type"]["tuning"]
-        #)
         self.tuning_cfg = tuning_cfg
 
     def sample(self, trial):
