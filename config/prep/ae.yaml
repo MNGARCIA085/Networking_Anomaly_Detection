@@ -33,7 +33,7 @@ windowing:
 
 temporal:
   delta:
-    enable: false
+    enabled: false
     name: delta
     params:
       order: 1
