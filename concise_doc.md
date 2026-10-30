@@ -334,3 +334,27 @@ Information the Tuner needs
 - The execution dependencies needed to build and run each trial.
 
 Key distinction: the sampler decides what configuration to try; the Experiment/Pipeline executes it; the evaluator measures its performance; Optuna decides what to try next
+
+
+---
+MORE DEC.
+
+### Configuration Convention
+
+Use component presence or absence to express whether an optional component is enabled. Do not introduce redundant `enabled` flags.
+
+- **Mandatory components:** Always specified (e.g., optimizer, loss).
+- **Optional components:** Included only when needed (e.g., scheduler, callbacks, preprocessing transformations).
+- **Optional parameters:** Omitted when not needed, allowing implementation defaults (e.g., `weight_decay`).
+- **Component configuration:** When present, specify its `name` and any required `params`.
+
+This keeps configuration concise and avoids redundant state.
+
+The convention is therefore:
+- Preprocessing components: Use enabled: true/false to explicitly control activation.
+- Other optional components: Presence or absence determines whether they are used (e.g., scheduler).
+- Optional parameters: Omit them when not needed; use implementation defaults.
+- Mandatory components: Always specify them (e.g., optimizer and loss)
+
+
+-> REMOVE enabled flag...
