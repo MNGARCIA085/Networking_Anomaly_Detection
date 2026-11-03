@@ -259,10 +259,9 @@ See the project documentation for the detailed rationale behind these decisions.
 
 ## Dataset
 
-The initial dataset used is provided as part of the DeepLearning.AI & Stanford Online Machine Learning Specialization, in the anomaly detection course material.
+The CICIDS2017 dataset consists of labeled network flows, including full packet payloads in pcap format, the corresponding profiles and the labeled flows (GeneratedLabelledFlows.zip) and CSV files for machine and deep learning purpose (MachineLearningCSV.zip) are publicly available for researchers. [Link](https://www.unb.ca/cic/datasets/ids-2017.html)
 
-DeepLearning.AI & Stanford Online. Machine Learning Specialization.
-https://www.deeplearning.ai/specializations/machine-learning
+Iman Sharafaldin, Arash Habibi Lashkari, and Ali A. Ghorbani, “Toward Generating a New Intrusion Detection Dataset and Intrusion Traffic Characterization”, 4th International Conference on Information Systems Security and Privacy (ICISSP), Portugal, January 2018.
 
-The dataset is used here for experimentation and methodology development; it is not presented as a real-world production dataset.
 
+**Note**. Given the restricted resources and the fact that this is a portfolio project, I will use a subset of the ICS Dataset.

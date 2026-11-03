@@ -28,7 +28,6 @@ class BaseModel(ABC):
 
     @abstractmethod
     def get_config(self):
-        """ raise not implemented.... """
         pass
     
 

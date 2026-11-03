@@ -9,50 +9,56 @@ def make_cfg(
     window_size=1,
     stride=1,
     strategy="last",
-    delta_enabled=False,
+    feature_selection=True,
+    transform=False,
+    delta=False,
 ):
+    pointwise = {
+        "imputation": {
+            "name": "simple",
+            "params": {"strategy": "median"},
+        },
+        "scaler": {
+            "name": "standard",
+            "params": {
+                "with_mean": True,
+                "with_std": True,
+            },
+        },
+    }
+
+    if feature_selection:
+        pointwise["feature_selection"] = {
+            "name": "variance_threshold",
+            "params": {"threshold": 0.0},
+        }
+
+    if transform:
+        pointwise["transform"] = {
+            "name": "power",
+            "params": {
+                "method": "yeo-johnson",
+                "standardize": False,
+            },
+        }
+
+    temporal = {}
+
+    if delta:
+        temporal["delta"] = {
+            "name": "delta",
+            "params": {"order": 1},
+        }
+
     return {
         "prep": {
-            "pointwise": {
-                "imputation": {
-                    "enabled": True,
-                    "name": "simple",
-                    "params": {"strategy": "median"},
-                },
-                "feature_selection": {
-                    "enabled": False,
-                    "name": "variance_threshold",
-                    "params": {"threshold": 0.0},
-                },
-                "scaler": {
-                    "enabled": True,
-                    "name": "standard",
-                    "params": {
-                        "with_mean": True,
-                        "with_std": True,
-                    },
-                },
-                "transform": {
-                    "enabled": False,
-                    "name": "power",
-                    "params": {
-                        "method": "yeo-johnson",
-                        "standardize": False,
-                    },
-                },
-            },
+            "pointwise": pointwise,
             "windowing": {
                 "size": window_size,
                 "stride": stride,
                 "strategy": strategy,
             },
-            "temporal": {
-                "delta": {
-                    "enable": delta_enabled,
-                    "name": "delta",
-                    "params": {"order": 1},
-                },
-            },
+            "temporal": temporal,
         }
     }
 

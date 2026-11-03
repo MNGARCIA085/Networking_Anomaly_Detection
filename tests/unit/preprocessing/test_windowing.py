@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from network_anomaly_detection.data.windowing import Windowing
+from network_anomaly_detection.preprocessing.windowing import Windowing
 
 
 def test_transform_creates_correct_windows_and_stride():

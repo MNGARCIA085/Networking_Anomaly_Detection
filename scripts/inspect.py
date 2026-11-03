@@ -86,5 +86,5 @@ def inspect_pipeline(run_id: str) -> None:
 
 
 if __name__ == "__main__":
-    run_id = "b3099800d92d4764ab606ae079f16f08"
+    run_id = "f8d29b9270f044a38372933ee17752d5"
     inspect_pipeline(run_id)

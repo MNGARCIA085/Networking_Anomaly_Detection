@@ -1,10 +1,8 @@
 from contextlib import nullcontext
+from .logger import ExperimentLogger
 
 
-# later -> make in inherit from an abst. class; ExpLogger
-
-
-class NullLogger:
+class NullLogger(ExperimentLogger):
 
     def start_run(self, run_name=None, tags=None):
         return nullcontext()

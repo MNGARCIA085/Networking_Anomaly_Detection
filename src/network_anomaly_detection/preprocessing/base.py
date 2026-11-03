@@ -1,7 +1,7 @@
 import joblib
 
 from abc import ABC, abstractmethod
-from network_anomaly_detection.data.windowing import Windowing
+from .windowing import Windowing
 
 from network_anomaly_detection.preprocessing.pipeline import (
     PreprocessingPipeline,
@@ -45,7 +45,7 @@ class BasePrep():
         # 1. Imputer
         imputer_cfg = cfg.get("imputation", {})
 
-        if imputer_cfg.get("enabled", False):
+        if imputer_cfg:
             imputer = create_imputer(
                 imputer_cfg["name"],
                 **imputer_cfg.get("params", {}),
@@ -63,7 +63,7 @@ class BasePrep():
         # 2. Feature Selection -> Var. threshold (before scaling)
         feat_sel_cfg = cfg.get("feature_selection", {})
 
-        if feat_sel_cfg.get("enabled", False):
+        if feat_sel_cfg:
             if feat_sel_cfg["name"] == "variance_threshold":
                 selector = create_feature_selector(
                     name=feat_sel_cfg["name"],
@@ -78,25 +78,28 @@ class BasePrep():
 
 
         # 3. Scaler
-        scaler_cfg = cfg["scaler"]
+        scaler_cfg = cfg.get("scaler", {})
 
-        scaler = create_scaler(
-            scaler_cfg["name"],
-            **scaler_cfg.get("params", {}),
-        )
+        if scaler_cfg:
+            scaler = create_scaler(
+                scaler_cfg["name"],
+                **scaler_cfg.get("params", {}),
+            )
 
-        steps.append(scaler)
+            steps.append(scaler)
 
-        config.append({
-            "scaler": {
-                "name": scaler_cfg["name"],
-                "params": scaler_cfg.get("params", {}),
-            }
-        })
+            config.append({
+                "scaler": {
+                    "name": scaler_cfg["name"],
+                    "params": scaler_cfg.get("params", {}),
+                }
+            })
 
 
         # 4. Feature Selection -> PCA (after scaling)
-        if feat_sel_cfg.get("enabled", False):
+        feat_sel_cfg = cfg.get("feature_selection", {})
+
+        if feat_sel_cfg:
             if feat_sel_cfg["name"] == "pca":
                 selector = create_feature_selector(
                     name=feat_sel_cfg["name"],
@@ -104,11 +107,10 @@ class BasePrep():
                 )
                 steps.append(selector)
 
-
-            config.append({
-                "name": feat_sel_cfg["name"],
-                "params": feat_sel_cfg.get("params", {}),
-            })
+                config.append({
+                    "name": feat_sel_cfg["name"],
+                    "params": feat_sel_cfg.get("params", {}),
+                })
 
 
 
@@ -146,9 +148,9 @@ class BasePrep():
         config = []
 
         # Delta transform
-        delta_cfg = cfg.get("delta")
+        delta_cfg = cfg.get("delta", {})
 
-        if delta_cfg and delta_cfg.get("enable", False):
+        if delta_cfg:
             delta = create_delta(
                 delta_cfg["name"],
                 **delta_cfg.get("params", {}),
@@ -273,23 +275,6 @@ class BasePrep():
             "windowing": self.windowing_config,
             "temporal": self.temporal_config,
     }
-
-
-
-"""
-This assumes your PreprocessingPipeline follows the usual scikit-learn convention 
-of storing named steps in pipeline.steps
-
-
-Your custom components, such as Windowing and your delta transformer, might not 
-implement get_params().
-
-You have two options:
-- Preferred: implement get_params() for your custom components, 
-following the scikit-learn convention
-
-
-"""
 
 
 

@@ -275,41 +275,7 @@ class MLFlowLogger(ExperimentLogger):
             else:
                 target.unlink()
 
-
-
-
     
-
-    #--------------------------------------------------------#
-    
-
-
-
-    def run_artifact_dir(self):
-        """Return the local artifact directory for the active MLflow run."""
-
-        run = mlflow.active_run()
-
-        if run is None:
-            raise RuntimeError(
-                "No active MLflow run."
-            )
-
-        run_id = run.info.run_id
-
-        path = (
-            self.artifact_dir
-            / str(run.info.experiment_id)
-            / run_id
-            / "artifacts"
-        )
-
-        path.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        return path
 
 
     def artifact_path(
@@ -404,7 +370,8 @@ class MLFlowLogger(ExperimentLogger):
         )
 
         if checkpoint is None:
-            checkpoints = sorted(checkpoint_dir.glob("*.pt"))
+            #checkpoints = sorted(checkpoint_dir.glob("*.pt"))
+            checkpoints = sorted(checkpoint_dir.glob("*.ckpt")) 
 
             if not checkpoints:
                 raise FileNotFoundError(
@@ -525,18 +492,6 @@ class MLFlowLogger(ExperimentLogger):
 
         self.log_artifact(path)
         return path
-
-
-    #----------------- save prep (generalioze later)-------------#
-    def save_prepv0(self, prep):
-        # Keep this artifact path consistent with resume().
-        prep_path = self.artifact_path(
-            "prep.pkl", #joblib
-            artifact_dir=self.run_artifact_dir() / "preprocessing",
-        )
-        prep.save(prep_path)
-        self.log_artifact(prep_path, artifact_path="preprocessing")
-
 
 
 
@@ -800,7 +755,38 @@ class MLFlowLogger(ExperimentLogger):
       
 
 
+#--------------------------------------------------------#
+    
 
+
+    # repeated maybe i need to delete it
+    """
+    def run_artifact_dir(self):
+        Return the local artifact directory for the active MLflow run.
+
+        run = mlflow.active_run()
+
+        if run is None:
+            raise RuntimeError(
+                "No active MLflow run."
+            )
+
+        run_id = run.info.run_id
+
+        path = (
+            self.artifact_dir
+            / str(run.info.experiment_id)
+            / run_id
+            / "artifacts"
+        )
+
+        path.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        return path
+    """
 
 
 

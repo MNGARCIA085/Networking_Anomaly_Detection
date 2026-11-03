@@ -1,7 +1,7 @@
 import numpy as np
 
 from network_anomaly_detection.preprocessing.base import BasePrep
-from network_anomaly_detection.data.windowing import Windowing
+from network_anomaly_detection.preprocessing.windowing import Windowing
 
 
 class RecordingPrep:

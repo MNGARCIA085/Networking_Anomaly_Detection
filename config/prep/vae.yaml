@@ -1,18 +1,15 @@
 pointwise:
   imputation:
-    enabled: true
     name: simple
     params:
       strategy: median
 
   feature_selection:
-    enabled: false
     name: variance_threshold
     params:
       threshold: 0.0
 
   scaler:
-    enabled: true
     name: standard
     params:
       with_mean: true
@@ -24,12 +21,6 @@ windowing:
   stride: 1
 
 
-temporal:
-  delta:
-    enabled: false
-    name: delta
-    params:
-      order: 1
 
 
 

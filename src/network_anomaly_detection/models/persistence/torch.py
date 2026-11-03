@@ -11,7 +11,7 @@ def save_torch_model(model, path):
     # Save model weights
     torch.save(
         model.state_dict(),
-        path / "weights.pt"
+        path / "weights.pt",
     )
 
     # Save model config
@@ -40,7 +40,8 @@ def load_torch_model(model_cls, path):
     model.load_state_dict(
         torch.load(
             path / "weights.pt",
-            map_location="cpu"
+            map_location="cpu",
+            weights_only=True,
         )
     )
 
