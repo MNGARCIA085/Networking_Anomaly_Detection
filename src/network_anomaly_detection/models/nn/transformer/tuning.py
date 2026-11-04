@@ -54,7 +54,7 @@ class TransformerAESampler:
         # ====================================================
         # PREPROCESSING: POINTWISE
         # ====================================================
-        cfg["model_type"]["prep"]["pointwise"]["imputation"] = (
+        cfg["prep"]["pointwise"]["imputation"] = (
             sample_imputation(
                 trial,
                 tuning["prep"]["pointwise"]["imputation"],
@@ -62,7 +62,7 @@ class TransformerAESampler:
         )
 
 
-        cfg["model_type"]["prep"]["pointwise"]["scaler"] = (
+        cfg["prep"]["pointwise"]["scaler"] = (
             sample_scaler(
                 trial,
                 tuning["prep"]["pointwise"]["scaler"],
@@ -74,7 +74,7 @@ class TransformerAESampler:
         # PREPROCESSING: WINDOWING
         # ====================================================
 
-        cfg["model_type"]["prep"]["windowing"]["size"] = (
+        cfg["prep"]["windowing"]["size"] = (
             sample_window_size(
                 trial,
                 tuning["prep"]["windowing"]["size"],
@@ -100,7 +100,7 @@ class TransformerAESampler:
                 tuning["prep"]["temporal"]["delta"]["order"]["high"],
             )
 
-        cfg["model_type"]["prep"]["temporal"]["delta"] = {
+        cfg["prep"]["temporal"]["delta"] = {
             "enable": use_delta,
             "name": "delta",
             "params": {"order": order},
@@ -119,7 +119,7 @@ class TransformerAESampler:
         )
 
         for name, value in dimensions.items():
-            cfg["model_type"]["models"][name] = value
+            cfg["models"][name] = value
 
         # input_dim and seq_len are derived from the prepared
         # input_shape by TransformerAEModel, not sampled here.
@@ -128,21 +128,21 @@ class TransformerAESampler:
         # TRAINING
         # ====================================================
 
-        cfg["model_type"]["training"]["optimizer"] = (
+        cfg["training"]["optimizer"] = (
             sample_optimizer(
                 trial,
                 tuning["training_space"]["optimizer"],
             )
         )
 
-        cfg["model_type"]["training"]["callbacks"] = (
+        cfg["training"]["callbacks"] = (
             sample_callbacks(
                 trial,
                 tuning["training_space"]["callbacks"],
             )
         )
 
-        cfg["model_type"]["training"]["epochs"] = (
+        cfg["training"]["epochs"] = (
             trial.suggest_int(
                 "training.epochs",
                 tuning["training_space"]["epochs"]["low"],
@@ -150,7 +150,7 @@ class TransformerAESampler:
             )
         )
 
-        cfg["model_type"]["training"]["batch_size"] = (
+        cfg["training"]["batch_size"] = (
             trial.suggest_categorical(
                 "training.batch_size",
                 tuning["training_space"]["batch_size"]["choices"],
@@ -162,7 +162,7 @@ class TransformerAESampler:
         # ====================================================
 
         if "thresholding" in tuning:
-            cfg["model_type"]["thresholding"] = deepcopy(
+            cfg["thresholding"] = deepcopy(
                 tuning["thresholding"]
             )
 

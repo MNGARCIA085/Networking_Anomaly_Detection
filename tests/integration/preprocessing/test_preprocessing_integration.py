@@ -51,15 +51,13 @@ def make_cfg(
         }
 
     return {
-        "prep": {
-            "pointwise": pointwise,
-            "windowing": {
-                "size": window_size,
-                "stride": stride,
-                "strategy": strategy,
-            },
-            "temporal": temporal,
-        }
+        "pointwise": pointwise,
+        "windowing": {
+            "size": window_size,
+            "stride": stride,
+            "strategy": strategy,
+        },
+        "temporal": temporal,
     }
 
 

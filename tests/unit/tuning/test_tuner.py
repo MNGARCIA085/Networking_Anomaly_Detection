@@ -1,3 +1,4 @@
+from copy import deepcopy
 from unittest.mock import Mock
 
 import numpy as np
@@ -9,19 +10,62 @@ from network_anomaly_detection.tuning.tuner import Tuner
 
 @pytest.fixture
 def cfg():
+    """Base experiment configuration."""
     return {
         "random_state": 42,
         "paths": {"data": "data/processed"},
         "tracking": {"uri": "mlflow.db"},
         "experiment_name": "anomaly-detection",
-        "model_type": {
-            "name": "ae",
-            "tuning": {
-                "n_trials": 2,
-                "n_jobs": 1,
-                "metric": "pr_auc",
-                "direction": "maximize",
+        "name": "ae",
+        "models": {
+            "encoder_dims": [128, 64, 32, 16],
+            "decoder_dims": [32, 64, 128],
+        },
+        "training": {
+            "batch_size": 32,
+            "epochs": 5,
+        },
+        "prep": {
+            "pointwise": {
+                "imputation": {
+                    "name": "simple",
+                    "params": {"strategy": "median"},
+                },
+                "scaler": {
+                    "name": "standard",
+                    "params": {},
+                },
             },
+            "windowing": {"size": 3, "stride": 1},
+        },
+        "thresholding": {
+            "name": "constrained_f1",
+            "params": {"min_recall": 0.75},
+        },
+    }
+
+
+@pytest.fixture
+def tun_cfg():
+    """Tuning-specific configuration."""
+    return {
+        "random_state": 42,
+        "metric": "pr_auc",
+        "direction": "maximize",
+        "n_trials": 2,
+        "n_jobs": 1,
+        "prep": {
+            "windowing": {"size": {"choices": [1, 3]}},
+        },
+        "model_space": {
+            "encoder_dims": {
+                "choices": [[32, 16], [64, 32]],
+            },
+        },
+        "training_space": {},
+        "thresholding": {
+            "name": "constrained_f1",
+            "params": {"min_recall": 0.75},
         },
     }
 
@@ -38,26 +82,22 @@ def data():
 
 
 @pytest.fixture
-def tuner(cfg, monkeypatch):
+def tuner(cfg, tun_cfg, monkeypatch):
     import network_anomaly_detection.tuning.tuner as tuner_module
 
-    sampler = Mock()
-    sampler.sample.side_effect = [
+    sampled_configs = [
         {
-            "model_type": {
-                "name": "ae",
-                "models": {"encoder_dims": [32, 16]},
-                "tuning": {"n_trials": 2},
-            }
+            **deepcopy(cfg),
+            "models": {"encoder_dims": [32, 16]},
         },
         {
-            "model_type": {
-                "name": "ae",
-                "models": {"encoder_dims": [64, 32]},
-                "tuning": {"n_trials": 2},
-            }
+            **deepcopy(cfg),
+            "models": {"encoder_dims": [64, 32]},
         },
     ]
+
+    sampler = Mock()
+    sampler.sample.side_effect = sampled_configs
 
     monkeypatch.setitem(
         tuner_module.TUNING_REGISTRY,
@@ -70,10 +110,17 @@ def tuner(cfg, monkeypatch):
         "metrics": {"pr_auc": 0.8}
     }
 
+    # Capture configurations passed to ExperimentPipeline.__init__.
+    experiment_configs = []
+
+    def experiment_factory(cfg, logger):
+        experiment_configs.append(deepcopy(cfg))
+        return experiment
+
     monkeypatch.setattr(
         tuner_module,
         "Experiment",
-        lambda cfg, logger: experiment,
+        experiment_factory,
     )
 
     prep = Mock()
@@ -86,17 +133,28 @@ def tuner(cfg, monkeypatch):
         prep_cls,
     )
 
+    evaluator = Mock()
+
     instance = Tuner(
         cfg=cfg,
-        evaluator=Mock(),
+        tun_cfg=tun_cfg,
+        evaluator=evaluator,
         logger=Mock(),
     )
 
-    return instance, sampler, experiment, prep, prep_cls
+    return (
+        instance,
+        sampler,
+        experiment,
+        prep,
+        prep_cls,
+        experiment_configs,
+    )
 
 
 def test_run_optimizes_configured_metric(tuner, data):
-    instance, sampler, experiment, prep, prep_cls = tuner
+    instance, sampler, experiment, prep, prep_cls, _ = tuner
+
     X_train, y_train, X_val, y_val = data
 
     study = instance.run(
@@ -120,13 +178,21 @@ def test_run_optimizes_configured_metric(tuner, data):
     assert prep_cls.call_count == 2
     assert prep.fit.call_count == 2
 
-    # Each trial records the configuration it sampled.
+    # Each trial records its effective configuration.
     for trial in study.trials:
-        assert trial.user_attrs["config"]["model_type"]["name"] == "ae"
+        assert trial.user_attrs["config"]["name"] == "ae"
 
 
 def test_trial_uses_sampled_config_and_parent_metadata(tuner, data):
-    instance, sampler, experiment, prep, prep_cls = tuner
+    (
+        instance,
+        sampler,
+        experiment,
+        prep,
+        prep_cls,
+        experiment_configs,
+    ) = tuner
+
     X_train, y_train, X_val, y_val = data
 
     instance.run(
@@ -141,6 +207,7 @@ def test_trial_uses_sampled_config_and_parent_metadata(tuner, data):
 
     call = experiment.run.call_args
 
+    # Experiment execution metadata.
     assert call.kwargs["nested"] is True
     assert call.kwargs["run_name"] == "trial_0"
 
@@ -151,10 +218,15 @@ def test_trial_uses_sampled_config_and_parent_metadata(tuner, data):
         "tuning_metric": "pr_auc",
     }
 
+    # Prep and evaluator are passed to run().
     assert call.kwargs["prep"] is prep
     assert call.kwargs["evaluator"] is instance.evaluator
 
-    # The sampled training data and labels are passed to the experiment.
+    # Sampled configuration is passed to ExperimentPipeline constructor.
+    assert len(experiment_configs) == 1
+    assert experiment_configs[0]["models"]["encoder_dims"] == [32, 16]
+
+    # Training data.
     np.testing.assert_array_equal(
         call.kwargs["X_train"],
         X_train,
@@ -164,7 +236,7 @@ def test_trial_uses_sampled_config_and_parent_metadata(tuner, data):
         y_train,
     )
 
-    # Validation data is not filtered by Tuner.
+    # Validation data remains unfiltered.
     np.testing.assert_array_equal(
         call.kwargs["X_val"],
         X_val,
@@ -175,35 +247,20 @@ def test_trial_uses_sampled_config_and_parent_metadata(tuner, data):
     )
 
 
-def test_get_best_config_removes_tuning_and_tracking_keys():
-    best_config = {
-        "random_state": 42,
-        "paths": {"data": "data/processed"},
-        "tracking": {"uri": "mlflow.db"},
-        "experiment_name": "anomaly-detection",
-        "model_type": {
-            "name": "ae",
-            "models": {"encoder_dims": [64, 32]},
-            "tuning": {"n_trials": 20},
-        },
-    }
+def test_tuning_does_not_mutate_base_config(tuner, data):
+    instance, _, _, _, _, _ = tuner
 
-    study = optuna.create_study(direction="maximize")
-    trial = study.ask()
-    trial.set_user_attr("config", best_config)
-    study.tell(trial, 0.95)
+    original_cfg = deepcopy(instance.cfg)
 
-    result = Tuner.get_best_config(study)
+    X_train, y_train, X_val, y_val = data
 
-    assert result["model_type"]["models"]["encoder_dims"] == [64, 32]
-
-    assert "tuning" not in result["model_type"]
-    assert "paths" not in result
-    assert "tracking" not in result
-    assert "experiment_name" not in result
-
-    # Extraction must not mutate the configuration stored on the trial.
-    assert (
-        "tuning"
-        in study.best_trial.user_attrs["config"]["model_type"]
+    instance.run(
+        X_train=X_train,
+        y_train=y_train,
+        X_val=X_val,
+        y_val=y_val,
+        n_trials=2,
+        n_jobs=1,
     )
+
+    assert instance.cfg == original_cfg

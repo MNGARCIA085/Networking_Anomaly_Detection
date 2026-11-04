@@ -17,7 +17,6 @@ def sample_window_size(trial, cfg):
 def sample_imputation(trial, cfg):
 
     return {
-        "enabled": True,
         "name": cfg["names"][0],
         "params": {
             "strategy": trial.suggest_categorical(
@@ -35,7 +34,6 @@ def sample_imputation(trial, cfg):
 def sample_transform(trial, cfg):
 
     return {
-        "enabled": True,
         "name": cfg["names"][0],
         "params": {
             "method": trial.suggest_categorical(
@@ -57,7 +55,6 @@ def sample_transform(trial, cfg):
 def sample_scaler(trial, cfg):
 
     return {
-        "enabled": True,
         "name": trial.suggest_categorical(
             "prep.scaler.name",
             cfg["names"],

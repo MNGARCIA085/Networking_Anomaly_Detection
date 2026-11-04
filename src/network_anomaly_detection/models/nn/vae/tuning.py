@@ -57,28 +57,28 @@ class VAESampler:
         # PREPROCESSING
         # ====================================================
 
-        cfg["model_type"]["prep"]["pointwise"]["imputation"] = (
+        cfg["prep"]["pointwise"]["imputation"] = (
             sample_imputation(
                 trial,
                 tuning["prep"]["pointwise"]["imputation"],
             )
         )
 
-        cfg["model_type"]["prep"]["pointwise"]["transform"] = (
+        cfg["prep"]["pointwise"]["transform"] = (
             sample_transform(
                 trial,
                 tuning["prep"]["pointwise"]["transform"],
             )
         )
 
-        cfg["model_type"]["prep"]["pointwise"]["scaler"] = (
+        cfg["prep"]["pointwise"]["scaler"] = (
             sample_scaler(
                 trial,
                 tuning["prep"]["pointwise"]["scaler"],
             )
         )
 
-        cfg["model_type"]["prep"]["windowing"]["size"] = (
+        cfg["prep"]["windowing"]["size"] = (
             sample_window_size(
                 trial,
                 tuning["prep"]["windowing"]["size"],
@@ -94,19 +94,19 @@ class VAESampler:
             tuning["model_space"],
         )
 
-        cfg["model_type"]["models"]["encoder_dims"] = (
+        cfg["models"]["encoder_dims"] = (
             dimensions["encoder_dims"]
         )
 
-        cfg["model_type"]["models"]["decoder_dims"] = (
+        cfg["models"]["decoder_dims"] = (
             dimensions["decoder_dims"]
         )
 
-        cfg["model_type"]["models"]["latent_dim"] = (
+        cfg["models"]["latent_dim"] = (
             dimensions["latent_dim"]
         )
 
-        cfg["model_type"]["models"]["beta"] = (
+        cfg["models"]["beta"] = (
             dimensions["beta"]
         )
 
@@ -114,21 +114,21 @@ class VAESampler:
         # TRAINING
         # ====================================================
 
-        cfg["model_type"]["training"]["optimizer"] = (
+        cfg["training"]["optimizer"] = (
             sample_optimizer(
                 trial,
                 tuning["training_space"]["optimizer"],
             )
         )
 
-        cfg["model_type"]["training"]["callbacks"] = (
+        cfg["training"]["callbacks"] = (
             sample_callbacks(
                 trial,
                 tuning["training_space"]["callbacks"],
             )
         )
 
-        cfg["model_type"]["training"]["epochs"] = (
+        cfg["training"]["epochs"] = (
             trial.suggest_int(
                 "training.epochs",
                 tuning["training_space"]["epochs"]["low"],
@@ -136,7 +136,7 @@ class VAESampler:
             )
         )
 
-        cfg["model_type"]["training"]["batch_size"] = (
+        cfg["training"]["batch_size"] = (
             trial.suggest_categorical(
                 "training.batch_size",
                 tuning["training_space"]["batch_size"]["choices"],
@@ -147,7 +147,7 @@ class VAESampler:
         # THRESHOLDING
         # ====================================================
 
-        cfg["model_type"]["thresholding"] = deepcopy(
+        cfg["thresholding"] = deepcopy(
             tuning["thresholding"]
         )
 

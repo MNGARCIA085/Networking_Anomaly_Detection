@@ -63,13 +63,13 @@ def main(cfg: DictConfig):
     ]
 
     prep = prep_cls(
-        cfg['model_type']
+        cfg['model_type']['prep']
     )
 
 
     # Prep handles model-specific sample selection
     # For ex, AEs are trained only with normal data
-    X_train, y_train = prep.select_training_data(X_train, y_train) # select normal samples
+    X_train, y_train = prep.select_training_data(X_train, y_train)
 
     # Fit preprocessing ONLY on training data.
     prep.fit(
@@ -86,8 +86,13 @@ def main(cfg: DictConfig):
         artifact_dir=to_absolute_path(cfg['paths']['mlflow_artifacts']),
     )
 
+
+    new_cfg = cfg["model_type"]
+    new_cfg.pop('tuning')
+
+    
     experiment = Experiment(
-        cfg=cfg,
+        cfg=new_cfg,
         logger=logger,
     )
 
@@ -101,8 +106,7 @@ def main(cfg: DictConfig):
         y_train=y_train,
         X_val=X_val,
         y_val=y_val,
-        run_name='train',
-        #run_name=f"{cfg.model_type.name}_baseline",
+        run_name=f"{cfg['model_type']['name']}_baseline",
     )
 
     return result

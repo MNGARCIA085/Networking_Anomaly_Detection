@@ -19,133 +19,117 @@ threshold
 
 
 
+
+
+
+# ============================================================
+# AE + Isolation Forest Sampler
+# ============================================================
+
 class AEIsolationForestSampler:
 
     def __init__(self, base_cfg, tuning_cfg):
         self.base_cfg = deepcopy(base_cfg)
         self.tuning_cfg = tuning_cfg
 
-
     def sample(self, trial):
+
         cfg = deepcopy(self.base_cfg)
         tuning = self.tuning_cfg
-        model_cfg = cfg["model_type"]
 
-        # ----------------------------------------------------
+        # ====================================================
         # PREPROCESSING
-        # ----------------------------------------------------
-        """
-        prep_cfg = model_cfg["prep"]["pointwise"]
-        prep_tuning = tuning["prep"]
+        # ====================================================
 
-        prep_cfg["imputation"] = sample_imputation(
-            trial,
-            prep_tuning["imputation"],
-        )
-
-        #prep_cfg["transform"] = sample_transform(
-        #    trial,
-        #    prep_tuning["transform"],
-        #)
-
-        prep_cfg["scaler"] = sample_scaler(
-            trial,
-            prep_tuning["scaler"],
-        )
-        """
-
-        cfg["model_type"]["prep"]["pointwise"]["imputation"] = (
+        cfg["prep"]["pointwise"]["imputation"] = (
             sample_imputation(
                 trial,
                 tuning["prep"]["pointwise"]["imputation"],
             )
         )
 
-        #cfg["model_type"]["prep"]["pointwise"]["transform"] = (
-        #    sample_transform(
-        #        trial,
-        #        tuning["prep"]["pointwise"]["transform"],
-        #   )
-        #)
-
-        cfg["model_type"]["prep"]["pointwise"]["scaler"] = (
+        cfg["prep"]["pointwise"]["scaler"] = (
             sample_scaler(
                 trial,
                 tuning["prep"]["pointwise"]["scaler"],
             )
         )
 
-        cfg["model_type"]["prep"]["windowing"]["size"] = (
+        cfg["prep"]["windowing"]["size"] = (
             sample_window_size(
                 trial,
                 tuning["prep"]["windowing"]["size"],
             )
         )
 
+        # ====================================================
+        # AUTOENCODER
+        # ====================================================
 
-        # ----------------------------------------------------
-        # AE ARCHITECTURE
-        # ----------------------------------------------------
-        dimensions = sample_dimensions(
+        ae_dimensions = sample_dimensions(
             trial,
             tuning["ae_space"],
         )
 
-        model_cfg["models"]["ae"]["encoder_dims"] = (
-            dimensions["encoder_dims"]
-        )
-        model_cfg["models"]["ae"]["decoder_dims"] = (
-            dimensions["decoder_dims"]
+        cfg["models"]["ae"]["encoder_dims"] = (
+            ae_dimensions["encoder_dims"]
         )
 
-        # ----------------------------------------------------
+        cfg["models"]["ae"]["decoder_dims"] = (
+            ae_dimensions["decoder_dims"]
+        )
+
+        # ====================================================
         # ISOLATION FOREST
-        # ----------------------------------------------------
-        iso_cfg = model_cfg["models"]["isoforest"]
-        iso_tuning = tuning["isoforest_space"]
+        # ====================================================
 
-        iso_cfg["n_estimators"] = trial.suggest_int(
-            "isoforest.n_estimators",
-            iso_tuning["n_estimators"]["low"],
-            iso_tuning["n_estimators"]["high"],
+        cfg["models"]["isoforest"]["n_estimators"] = (
+            trial.suggest_int(
+                "models.isoforest.n_estimators",
+                tuning["isoforest_space"]["n_estimators"]["low"],
+                tuning["isoforest_space"]["n_estimators"]["high"],
+            )
         )
 
-        #iso_cfg["contamination"] = trial.suggest_float(
-        #    "isoforest.contamination",
-        #    iso_tuning["contamination"]["low"],
-        #    iso_tuning["contamination"]["high"],
-        #)
-
-        # ----------------------------------------------------
+        # ====================================================
         # AE TRAINING
-        # ----------------------------------------------------
-        training_cfg = model_cfg["training"]
-        training_tuning = tuning["training_space"]
+        # ====================================================
 
-        training_cfg["optimizer"] = sample_optimizer(
-            trial,
-            training_tuning["optimizer"],
+        cfg["training"]["optimizer"] = (
+            sample_optimizer(
+                trial,
+                tuning["training_space"]["optimizer"],
+            )
         )
 
-        training_cfg["callbacks"] = sample_callbacks(
-            trial,
-            training_tuning["callbacks"],
+        cfg["training"]["callbacks"] = (
+            sample_callbacks(
+                trial,
+                tuning["training_space"]["callbacks"],
+            )
         )
 
-        training_cfg["epochs"] = trial.suggest_int(
-            "training.epochs",
-            training_tuning["epochs"]["low"],
-            training_tuning["epochs"]["high"],
+        cfg["training"]["epochs"] = (
+            trial.suggest_int(
+                "training.epochs",
+                tuning["training_space"]["epochs"]["low"],
+                tuning["training_space"]["epochs"]["high"],
+            )
         )
 
-        training_cfg["batch_size"] = trial.suggest_categorical(
-            "training.batch_size",
-            training_tuning["batch_size"]["choices"],
+        cfg["training"]["batch_size"] = (
+            trial.suggest_categorical(
+                "training.batch_size",
+                tuning["training_space"]["batch_size"]["choices"],
+            )
         )
 
-        # ----------------------------------------------------
+        # ====================================================
         # THRESHOLDING
-        # ----------------------------------------------------
-        model_cfg["thresholding"] = deepcopy(tuning["thresholding"])
+        # ====================================================
+
+        cfg["thresholding"] = deepcopy(
+            tuning["thresholding"]
+        )
 
         return cfg

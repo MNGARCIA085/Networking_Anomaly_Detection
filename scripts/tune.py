@@ -38,11 +38,13 @@ def main(cfg: DictConfig):
 
         try:
 
-            # pass only what it needs
-            cfg.pop('paths', None)
+            # pass only what it needs; deepcopy later
+            tun_cfg = cfg["model_type"]["tuning"]
+            model_cfg = cfg["model_type"]
+            model_cfg.pop('tuning')
+            
 
-
-            tuner = Tuner(cfg, evaluator, logger)
+            tuner = Tuner(model_cfg, tun_cfg, evaluator, logger)
 
             study = tuner.run(
                 X_train=X_train,
@@ -80,8 +82,8 @@ def main(cfg: DictConfig):
 
     # ========= Retrain best model ========= #
     print('\n Retrain with best model\n')
-    prep_cls = PREP_REGISTRY[best_cfg["model_type"]["name"]]
-    prep = prep_cls(best_cfg["model_type"]) # later pass more specific conf
+    prep_cls = PREP_REGISTRY[best_cfg["name"]]
+    prep = prep_cls(best_cfg['prep'])
 
     X_train_selected, y_train_selected = (
         prep.select_training_data(X_train, y_train)

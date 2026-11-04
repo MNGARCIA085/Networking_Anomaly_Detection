@@ -33,6 +33,7 @@ class BasePrep():
 
 
 
+
     # Pointwise prep
     def build_pointwise_prep(self, cfg):
         """ It can be override by a model if needed"""
@@ -124,6 +125,7 @@ class BasePrep():
     # Not model-specific, win_size=1 means no actual windowing.
     def build_windowing(self, cfg):
 
+
         self.windowing_config = {
             "size": cfg["size"],
             "stride": cfg["stride"],
@@ -171,17 +173,16 @@ class BasePrep():
 
     # Build stages, poinwise -> windowing -> temp. prep.
     def build_preprocessing_stages(self):
-
         self.pointwise_prep = self.build_pointwise_prep(
-            self.cfg.get("prep", {}).get("pointwise")
+            self.cfg.get("pointwise")
         )
 
         self.windowing = self.build_windowing(
-            self.cfg.get("prep", {}).get("windowing")
+            self.cfg.get("windowing")
         )
 
         self.temporal_prep = self.build_temporal_prep(
-            self.cfg.get("prep", {}).get("temporal") # temporal_prep
+            self.cfg.get("temporal")
         )
 
         return (
@@ -189,6 +190,8 @@ class BasePrep():
             self.windowing,
             self.temporal_prep,
         )
+
+
 
     # --------------------------------------------------
     # FIT

@@ -9,16 +9,16 @@ from .registry import TUNING_REGISTRY
 
 class Tuner:
 
-    def __init__(self, cfg, evaluator, logger):
+    def __init__(self, cfg, tun_cfg, evaluator, logger):
 
         self.cfg = cfg
         self.evaluator = evaluator
         self.logger = logger
 
-        self.tun_cfg = cfg["model_type"]["tuning"]
+        self.tun_cfg = tun_cfg
 
         self.sampler = TUNING_REGISTRY[
-            cfg["model_type"]["name"]
+            cfg["name"]
         ](
             base_cfg=cfg,
             tuning_cfg=self.tun_cfg,
@@ -62,8 +62,8 @@ class Tuner:
             )
 
             # Create a fresh prep for this trial's configuration.
-            prep_cls = PREP_REGISTRY[trial_cfg["model_type"]["name"]]
-            prep = prep_cls(trial_cfg["model_type"])
+            prep_cls = PREP_REGISTRY[trial_cfg["name"]]
+            prep = prep_cls(trial_cfg['prep']) # trial_cfg_prep['prep']
 
             # Apply model-specific selection to training data.
             X_trial_train, y_trial_train = prep.select_training_data(
@@ -130,11 +130,6 @@ class Tuner:
     @staticmethod
     def get_best_config(study):
         cfg = deepcopy(study.best_trial.user_attrs["config"])
-        # remove unnecessary keys
-        cfg["model_type"].pop("tuning", None)
-        cfg.pop("paths", None)
-        cfg.pop("tracking", None)
-        cfg.pop("experiment_name", None)
         return cfg
 
     

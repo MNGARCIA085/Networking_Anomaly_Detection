@@ -3,6 +3,6 @@ defaults:
   - /training: ae_isoforest
   - /tuning: ae_isoforest
   - /prep: ae
-  - /thresholding: ae # reuse for now
+  - /thresholding: ae
 
 name: ae_isoforest

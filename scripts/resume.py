@@ -27,7 +27,7 @@ def main(cfg):
 
     parser.add_argument(
         "--run-id",
-        default="fa490003288e48e69f531d892cadcb37",
+        default="cfd90dc9bf504e669286c6fef869b2da",
         #required=True,
     )
 
@@ -70,10 +70,19 @@ def main(cfg):
     # Experiment
     # --------------------------------------------------
 
+
+    # config to dict
+    from omegaconf import DictConfig, OmegaConf
+    cfg = OmegaConf.to_container(cfg, resolve=True)
+
+
+    new_cfg = cfg["model_type"]
+    new_cfg.pop('tuning')
+
     logger = MLFlowLogger()
     
     experiment = Experiment(
-        cfg=cfg,
+        cfg=new_cfg,
         logger=logger,
     )
 

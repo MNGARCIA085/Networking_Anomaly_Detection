@@ -94,7 +94,7 @@ class ExperimentPipeline:
 
 
         cfg = self.cfg
-        model_cfg = cfg["model_type"]
+        model_cfg = cfg
         metadata = metadata or {}
 
         # tags
@@ -107,7 +107,6 @@ class ExperimentPipeline:
         # common and important params
         self.logger.log_params({
             "model": model_cfg["name"],
-            "random_state": cfg["random_state"],
         })
 
         # metadata
@@ -190,7 +189,7 @@ class ExperimentPipeline:
                 "threshold_config.json",
             )
 
-        # threshold log as metric?
+        # threshold logged as metric?
 
 
 
@@ -240,7 +239,7 @@ class ExperimentPipeline:
         """Resume training from a Lightning checkpoint in an existing MLflow run."""
 
         cfg = self.cfg
-        model_cfg = cfg["model_type"]
+        model_cfg = cfg
         run = None
         run_status = "FAILED"
 

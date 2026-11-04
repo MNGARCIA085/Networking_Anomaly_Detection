@@ -90,14 +90,14 @@ class IsoForestSampler:
         # PREPROCESSING
         # ====================================================
 
-        cfg["model_type"]["prep"]["pointwise"]["scaler"] = (
+        cfg["prep"]["pointwise"]["scaler"] = (
             sample_scaler(
                 trial,
                 tuning["prep"]["pointwise"]["scaler"],
             )
         )
 
-        cfg["model_type"]["prep"]["pointwise"]["feature_selection"] = (
+        cfg["prep"]["pointwise"]["feature_selection"] = (
             sample_feature_selection(
                 trial,
                 tuning["prep"]["pointwise"]["feature_selection"],
@@ -105,27 +105,20 @@ class IsoForestSampler:
         )
 
 
-        cfg["model_type"]["prep"]["windowing"]["size"] = (
+        cfg["prep"]["windowing"]["size"] = (
             sample_window_size(
                 trial,
                 tuning["prep"]["windowing"]["size"],
             )
         )
 
-        """
-        cfg["model_type"]["prep"]["pointwise"]["dimensionality"] = (
-            sample_dimensionality(
-                trial,
-                tuning["prep"]["pointwise"]["dimensionality"],
-            )
-        )
-        """
+
 
         # ====================================================
         # MODEL
         # ====================================================
 
-        cfg["model_type"]["models"]["n_estimators"] = (
+        cfg["models"]["n_estimators"] = (
             trial.suggest_int(
                 "model.n_estimators",
                 tuning["model_space"]["n_estimators"]["low"],
@@ -134,8 +127,7 @@ class IsoForestSampler:
         )
 
 
-
-        cfg["model_type"]["models"]["contamination"] = (
+        cfg["models"]["contamination"] = (
             trial.suggest_float(
                 "model.contamination",
                 tuning["model_space"]["contamination"]["low"],
