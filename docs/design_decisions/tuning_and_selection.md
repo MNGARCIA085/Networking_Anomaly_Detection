@@ -15,6 +15,30 @@ PR-AUC is used as the primary optimization objective, with maximization as the d
 
 Optuna trials are tracked as nested MLflow runs under a parent tuning experiment.
 
+
+## Sample
+
+Base config is merged with the sample parameters.
+
+```
+Base configuration ─────────────┐
+                               │
+Tuning configuration ──> Sampler
+                               │
+                               ▼
+                       Sampled parameters
+                               │
+                               ▼
+                    Merge with base config
+                               │
+                               ▼
+                    Effective trial config
+                               │
+                               ▼
+                           Experiment
+```
+
+
 ## Candidate selection
 
 Hyperparameter optimization and candidate selection are separate processes.
