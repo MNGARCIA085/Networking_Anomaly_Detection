@@ -13,6 +13,10 @@ from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
 from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 
 
+from network_anomaly_detection.utils.seeding import seed_everything
+
+
+
 N_SPLITS = 2
 
 
@@ -49,7 +53,14 @@ def aggregate_fold_metrics(logger, fold_run_ids):
     config_name="config",
 )
 def main(cfg: DictConfig) -> None:
-    #cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+    cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+
+
+    new_cfg = cfg_dict["model_type"]
+    new_cfg.pop('tuning')
+
+
+    base_seed = int(cfg_dict["random_state"])   # [SEED 0] semilla base
 
     # Load the existing chronological development partitions.
     data = DataModule(
@@ -79,11 +90,11 @@ def main(cfg: DictConfig) -> None:
             "cv_n_splits": str(N_SPLITS),
         })
 
+
+        # [SEED 1] semilla base en el run padre
+        logger.log_params({"seed": base_seed})
+
         try:
-
-
-            cfg_dict = OmegaConf.to_container(cfg, resolve=True)
-
 
             for fold_idx, (train_idx, val_idx) in enumerate(
                 splitter.split(X), start=1
@@ -93,9 +104,14 @@ def main(cfg: DictConfig) -> None:
                 X_fold_val = X.iloc[val_idx]
                 y_fold_val = y.iloc[val_idx]
 
+                fold_seed = base_seed + fold_idx   # [SEED 2] semilla del fold
+
+                # [SEED 3] antes del prep: fit determinista
+                seed_everything(fold_seed)
+
                 # Every fold gets a fresh preprocessing instance.
                 prep_cls = PREP_REGISTRY[cfg_dict['model_type']['name']]
-                prep = prep_cls(cfg_dict['model_type'])
+                prep = prep_cls(cfg_dict['model_type']['prep'])
 
                 # Apply model-specific selection to training data only.
                 X_fold_train, y_fold_train = prep.select_training_data(
@@ -106,11 +122,14 @@ def main(cfg: DictConfig) -> None:
                 prep.fit(X_fold_train, y_fold_train)
 
 
+                # [SEED 4] reset antes de construir/entrenar el modelo.
+                # Útil para que todas las familias arranquen del mismo estado
+                # RNG en el mismo fold, aunque el prep consuma RNG distinto.
+                seed_everything(fold_seed)
+
                 
-
-
                 experiment = Experiment(
-                    cfg=cfg_dict, # cfg_dict
+                    cfg=new_cfg,
                     logger=logger,
                 )
 
@@ -127,6 +146,7 @@ def main(cfg: DictConfig) -> None:
                         "cv_fold": fold_idx,
                         "train_size": len(train_idx),
                         "val_size": len(val_idx),
+                        "seed": str(fold_seed),   # [SEED 5] logueada por fold
                     },
                 )
 
@@ -145,3 +165,14 @@ def main(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+"""
+
+
+En CV la semilla va dentro del loop, por fold, antes de crear/ajustar el prep y 
+antes de construir el modelo. No en aggregate_fold_metrics.
+
+
+"""

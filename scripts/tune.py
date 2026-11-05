@@ -1,4 +1,5 @@
 import hydra
+from hydra.utils import to_absolute_path
 import mlflow
 from omegaconf import DictConfig, OmegaConf
 
@@ -8,6 +9,10 @@ from network_anomaly_detection.infra.logging.mlflow_logger import MLFlowLogger
 from network_anomaly_detection.experiment.experiment import Experiment
 from network_anomaly_detection.tuning.tuner import Tuner
 from network_anomaly_detection.evaluation.evaluator import Evaluator
+
+
+from network_anomaly_detection.utils.seeding import seed_everything
+
 
 @hydra.main(
     config_path="../config",
@@ -24,7 +29,10 @@ def main(cfg: DictConfig):
     X_train, y_train, X_val, y_val = data_module.load_train_val()
 
     evaluator = Evaluator()
-    logger = MLFlowLogger()
+    logger = MLFlowLogger(
+        tracking_db=to_absolute_path(cfg['paths']['mlflow_db']),
+        artifact_dir=to_absolute_path(cfg['paths']['mlflow_artifacts']),
+    )
 
 
     with logger.start_run(run_name=f"{cfg['model_type']['name']}_tuning") as parent_run:
@@ -44,7 +52,7 @@ def main(cfg: DictConfig):
             model_cfg.pop('tuning')
             
 
-            tuner = Tuner(model_cfg, tun_cfg, evaluator, logger)
+            tuner = Tuner(model_cfg, tun_cfg, evaluator, logger, seed=int(cfg["random_state"]))
 
             study = tuner.run(
                 X_train=X_train,
@@ -82,6 +90,12 @@ def main(cfg: DictConfig):
 
     # ========= Retrain best model ========= #
     print('\n Retrain with best model\n')
+
+
+    best_seed = Tuner.get_best_seed(study)
+    seed_everything(best_seed)           
+
+
     prep_cls = PREP_REGISTRY[best_cfg["name"]]
     prep = prep_cls(best_cfg['prep'])
 

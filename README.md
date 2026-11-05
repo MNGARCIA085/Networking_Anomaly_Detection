@@ -101,6 +101,12 @@ python scripts/train.py -m \
 ```
 
 
+Resume training
+```bash
+python -m scripts/resume --run-id <RUN_ID> --checkpoint last.pt
+```
+
+
 ### Hyperparameter Tuning
 
 Run an Optuna-based tuning experiment:

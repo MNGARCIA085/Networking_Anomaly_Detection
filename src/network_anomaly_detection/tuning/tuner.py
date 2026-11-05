@@ -6,10 +6,11 @@ from network_anomaly_detection.experiment.experiment import Experiment
 from network_anomaly_detection.preprocessing.registry import PREP_REGISTRY
 from .registry import TUNING_REGISTRY
 
+from network_anomaly_detection.utils.seeding import seed_everything
 
 class Tuner:
 
-    def __init__(self, cfg, tun_cfg, evaluator, logger):
+    def __init__(self, cfg, tun_cfg, evaluator, logger, seed: int = 42):
 
         self.cfg = cfg
         self.evaluator = evaluator
@@ -23,6 +24,8 @@ class Tuner:
             base_cfg=cfg,
             tuning_cfg=self.tun_cfg,
         )
+
+        self.seed = seed
 
 
     def run(
@@ -47,6 +50,12 @@ class Tuner:
         direction = self.tun_cfg["direction"]
 
         def objective(trial):
+
+            # Semilla determinista por trial.
+            # Debe ir ANTES de samplear, crear el prep y entrenar.
+            trial_seed = self.seed + trial.number
+            seed_everything(trial_seed)
+            trial.set_user_attr("seed", trial_seed)
 
             # --------------------------------------------------
             # Model-specific sampling
@@ -97,6 +106,7 @@ class Tuner:
                     "run_type": "tuning_trial",
                     "trial_number": str(trial.number),
                     "tuning_metric": metric,
+                    "seed": str(trial_seed), # for mlflow logging
                 },
             )
 
@@ -112,8 +122,13 @@ class Tuner:
         # Optuna study
         # ------------------------------------------------------
 
+        # Semilla del sampler de Optuna.
+        # Para comparar familias usa n_jobs=1.
+        seed_everything(self.seed)
+
         study = optuna.create_study(
             direction=direction,
+            sampler=optuna.samplers.TPESampler(seed=self.seed),
         )
 
         study.optimize(
@@ -131,5 +146,11 @@ class Tuner:
     def get_best_config(study):
         cfg = deepcopy(study.best_trial.user_attrs["config"])
         return cfg
+
+
+    @staticmethod
+    def get_best_seed(study) -> int:
+        # Semilla del mejor trial, para el retrain.
+        return int(study.best_trial.user_attrs["seed"])
 
     

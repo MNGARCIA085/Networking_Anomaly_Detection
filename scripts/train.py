@@ -11,6 +11,8 @@ from network_anomaly_detection.experiment.experiment import Experiment
 from network_anomaly_detection.evaluation.evaluator import Evaluator
 
 
+from network_anomaly_detection.utils.seeding import seed_everything
+
 
 @hydra.main(
     config_path="../config",
@@ -18,6 +20,10 @@ from network_anomaly_detection.evaluation.evaluator import Evaluator
     version_base=None,
 )
 def main(cfg: DictConfig):
+
+    # Seed
+    seed = int(cfg["random_state"])
+    seed_everything(seed)
 
     # --------------------------------------------------
     # Data
@@ -107,6 +113,9 @@ def main(cfg: DictConfig):
         X_val=X_val,
         y_val=y_val,
         run_name=f"{cfg['model_type']['name']}_baseline",
+        metadata={
+            "seed":cfg["random_state"],
+        },
     )
 
     return result
