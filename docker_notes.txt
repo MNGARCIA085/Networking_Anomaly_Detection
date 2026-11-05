@@ -50,6 +50,9 @@ docker run --rm -it \
 
 
 
+tree -L 3 -I '.git|__pycache__|.venv|mlruns
+
+
 ##############################
 ############## GPU ###########
 ##############################
@@ -68,3 +71,17 @@ docker run --rm -it \
   -v "$(pwd)/mlruns:/app/mlruns" \
   -v "$(pwd)/mlflow.db:/app/mlflow.db" \
   network-anomaly:train-gpu
+
+
+
+
+
+
+USEFUL COMMANDS:
+
+
+pip install pytest-cov
+
+
+
+pytest tests/ --cov=network_anomaly_detection --cov-report=term-missing
