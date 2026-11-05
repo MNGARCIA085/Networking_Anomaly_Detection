@@ -36,7 +36,10 @@ def cfg():
                     "params": {},
                 },
             },
-            "windowing": {"size": 3, "stride": 1},
+            "windowing": {
+                "size": 3,
+                "stride": 1,
+            },
         },
         "thresholding": {
             "name": "constrained_f1",
@@ -55,7 +58,9 @@ def tun_cfg():
         "n_trials": 2,
         "n_jobs": 1,
         "prep": {
-            "windowing": {"size": {"choices": [1, 3]}},
+            "windowing": {
+                "size": {"choices": [1, 3]},
+            },
         },
         "model_space": {
             "encoder_dims": {
@@ -72,10 +77,17 @@ def tun_cfg():
 
 @pytest.fixture
 def data():
-    X_train = np.array([[0.1], [0.2], [0.3]])
+    X_train = np.array([
+        [0.1],
+        [0.2],
+        [0.3],
+    ])
     y_train = np.array([0, 0, 1])
 
-    X_val = np.array([[0.4], [0.5]])
+    X_val = np.array([
+        [0.4],
+        [0.5],
+    ])
     y_val = np.array([0, 1])
 
     return X_train, y_train, X_val, y_val
@@ -107,10 +119,9 @@ def tuner(cfg, tun_cfg, monkeypatch):
 
     experiment = Mock()
     experiment.run.return_value = {
-        "metrics": {"pr_auc": 0.8}
+        "metrics": {"pr_auc": 0.8},
     }
 
-    # Capture configurations passed to ExperimentPipeline.__init__.
     experiment_configs = []
 
     def experiment_factory(cfg, logger):
@@ -125,6 +136,7 @@ def tuner(cfg, tun_cfg, monkeypatch):
 
     prep = Mock()
     prep.select_training_data.side_effect = lambda X, y: (X, y)
+
     prep_cls = Mock(return_value=prep)
 
     monkeypatch.setitem(
@@ -211,20 +223,30 @@ def test_trial_uses_sampled_config_and_parent_metadata(tuner, data):
     assert call.kwargs["nested"] is True
     assert call.kwargs["run_name"] == "trial_0"
 
-    assert call.kwargs["metadata"] == {
+    metadata = call.kwargs["metadata"]
+
+    # Verify required metadata while allowing additional MLflow tags.
+    expected_metadata = {
         "mlflow.parentRunId": "parent-123",
         "run_type": "tuning_trial",
         "trial_number": "0",
         "tuning_metric": "pr_auc",
     }
 
+    for key, value in expected_metadata.items():
+        assert metadata[key] == value
+
     # Prep and evaluator are passed to run().
     assert call.kwargs["prep"] is prep
     assert call.kwargs["evaluator"] is instance.evaluator
 
-    # Sampled configuration is passed to ExperimentPipeline constructor.
+    # Sampled configuration is passed to Experiment constructor.
     assert len(experiment_configs) == 1
-    assert experiment_configs[0]["models"]["encoder_dims"] == [32, 16]
+
+    assert (
+        experiment_configs[0]["models"]["encoder_dims"]
+        == [32, 16]
+    )
 
     # Training data.
     np.testing.assert_array_equal(

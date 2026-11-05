@@ -1,6 +1,8 @@
+from copy import deepcopy
+from unittest.mock import Mock
+
 import numpy as np
 import pytest
-from unittest.mock import Mock
 
 from network_anomaly_detection.experiment.pipeline import ExperimentPipeline
 
@@ -25,11 +27,14 @@ class FakePrep:
 
     def select_training_data(self, X, y):
         self.selection_calls.append((X.copy(), y.copy()))
+
         mask = y == 0
+
         return X[mask], y[mask]
 
 
 class FakeModel:
+
     def __init__(self):
         self.adapted_shapes = []
 
@@ -51,8 +56,10 @@ class FakeModel:
 
 
 class FakeTrainer:
+
     def __init__(self):
         self.fit_args = None
+
         self.history = {
             "train_loss": [0.5],
             "val_loss": [0.4],
@@ -62,11 +69,17 @@ class FakeTrainer:
         return {"name": "fake_trainer"}
 
     def fit(self, X_train, y_train, X_val, y_val):
-        self.fit_args = (X_train, y_train, X_val, y_val)
+        self.fit_args = (
+            X_train,
+            y_train,
+            X_val,
+            y_val,
+        )
 
 
 @pytest.fixture
 def pipeline(monkeypatch):
+
     import network_anomaly_detection.experiment.pipeline as pipeline_module
 
     monkeypatch.setattr(
@@ -94,7 +107,9 @@ def pipeline(monkeypatch):
         },
         "thresholding": {
             "name": "constrained_f1",
-            "params": {"min_recall": 0.5},
+            "params": {
+                "min_recall": 0.5,
+            },
         },
     }
 
@@ -107,16 +122,19 @@ def pipeline(monkeypatch):
     model = FakeModel()
     trainer = FakeTrainer()
 
+    # Match the actual build_model(name, cfg, input_shape) signature.
     monkeypatch.setattr(
         pipeline_module,
         "build_model",
-        lambda cfg, input_shape: model,
+        lambda name, cfg, input_shape: model,
     )
 
+    # Match the actual build_trainer(name, model, cfg, checkpoint_dir)
+    # signature.
     monkeypatch.setattr(
         pipeline_module,
         "build_trainer",
-        lambda model, cfg, checkpoint_dir: trainer,
+        lambda name, model, cfg, checkpoint_dir: trainer,
     )
 
     pipeline.logger.checkpoint_dir.return_value = "/tmp/checkpoints"
@@ -129,14 +147,26 @@ def test_run_transforms_data_trains_and_evaluates_full_validation(
 ):
     pipeline, prep, model, trainer = pipeline
 
-    X_train = np.array([[0.1], [0.2], [0.3]])
+    X_train = np.array([
+        [0.1],
+        [0.2],
+        [0.3],
+    ])
+
     y_train = np.array([0, 0, 0])
 
-    X_val = np.array([[0.1], [0.8], [0.9]])
+    X_val = np.array([
+        [0.1],
+        [0.8],
+        [0.9],
+    ])
+
     y_val = np.array([0, 1, 1])
 
     evaluator = Mock()
-    evaluator.evaluate.return_value = {"pr_auc": 0.9}
+    evaluator.evaluate.return_value = {
+        "pr_auc": 0.9,
+    }
 
     result = pipeline.run(
         prep=prep,
@@ -150,25 +180,46 @@ def test_run_transforms_data_trains_and_evaluates_full_validation(
     # Preprocessing transforms both datasets without fitting.
     assert len(prep.transform_calls) == 2
 
-    # Training data selection.
+    # Training-data selection is performed once for validation callbacks.
     assert len(prep.selection_calls) == 1
 
-    # Trainer receives normal-only training and validation data.
+    # Trainer receives normal-only validation data.
     X_train_fit, y_train_fit, X_val_fit, y_val_fit = trainer.fit_args
 
-    np.testing.assert_array_equal(X_train_fit, X_train)
-    np.testing.assert_array_equal(y_train_fit, y_train)
+    np.testing.assert_array_equal(
+        X_train_fit,
+        X_train,
+    )
 
-    np.testing.assert_array_equal(X_val_fit, [[0.1]])
-    np.testing.assert_array_equal(y_val_fit, [0])
+    np.testing.assert_array_equal(
+        y_train_fit,
+        y_train,
+    )
+
+    np.testing.assert_array_equal(
+        X_val_fit,
+        [[0.1]],
+    )
+
+    np.testing.assert_array_equal(
+        y_val_fit,
+        [0],
+    )
 
     # Evaluation uses the complete validation set.
     evaluator.evaluate.assert_called_once()
 
     _, kwargs = evaluator.evaluate.call_args
 
-    np.testing.assert_array_equal(kwargs["y_true"], y_val)
-    np.testing.assert_array_equal(kwargs["scores"], X_val[:, 0])
+    np.testing.assert_array_equal(
+        kwargs["y_true"],
+        y_val,
+    )
+
+    np.testing.assert_array_equal(
+        kwargs["scores"],
+        X_val[:, 0],
+    )
 
     assert result["metrics"] == {"pr_auc": 0.9}
     assert result["model"] is model
@@ -182,16 +233,27 @@ def test_run_transforms_data_trains_and_evaluates_full_validation(
 
 
 def test_run_logs_training_history_when_available(pipeline):
+
     pipeline, prep, model, trainer = pipeline
 
-    X_train = np.array([[0.1], [0.2]])
+    X_train = np.array([
+        [0.1],
+        [0.2],
+    ])
+
     y_train = np.array([0, 0])
 
-    X_val = np.array([[0.3], [0.9]])
+    X_val = np.array([
+        [0.3],
+        [0.9],
+    ])
+
     y_val = np.array([0, 1])
 
     evaluator = Mock()
-    evaluator.evaluate.return_value = {"pr_auc": 0.8}
+    evaluator.evaluate.return_value = {
+        "pr_auc": 0.8,
+    }
 
     pipeline.run(
         prep=prep,
@@ -208,18 +270,30 @@ def test_run_logs_training_history_when_available(pipeline):
 
 
 def test_pipeline_does_not_mutate_original_config(pipeline):
+
     pipeline, prep, model, trainer = pipeline
 
-    original_cfg = pipeline.cfg.copy()
+    # Deep copy is necessary to detect nested mutations.
+    original_cfg = deepcopy(pipeline.cfg)
 
-    X_train = np.array([[0.1], [0.2]])
+    X_train = np.array([
+        [0.1],
+        [0.2],
+    ])
+
     y_train = np.array([0, 0])
 
-    X_val = np.array([[0.3], [0.9]])
+    X_val = np.array([
+        [0.3],
+        [0.9],
+    ])
+
     y_val = np.array([0, 1])
 
     evaluator = Mock()
-    evaluator.evaluate.return_value = {"pr_auc": 0.8}
+    evaluator.evaluate.return_value = {
+        "pr_auc": 0.8,
+    }
 
     pipeline.run(
         prep=prep,
