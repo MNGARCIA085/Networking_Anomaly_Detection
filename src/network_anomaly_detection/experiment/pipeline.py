@@ -10,21 +10,21 @@ from network_anomaly_detection.preprocessing.base import BasePrep
 from network_anomaly_detection.thresholding.thresholding import Thresholding
 
 
-def build_model(cfg, input_shape):
+def build_model(name, cfg, input_shape):
     """Construct a model using the configured model registry key."""
-    model_cls = MODEL_REGISTRY[cfg["name"]]
+    model_cls = MODEL_REGISTRY[name]
     return model_cls(
-        cfg["models"],
+        cfg,
         input_shape=input_shape,
     )
 
 
-def build_trainer(model, cfg, checkpoint_dir):
+def build_trainer(name, model, cfg, checkpoint_dir):
     """Construct the trainer registered for the configured model type."""
-    trainer_cls = TRAINER_REGISTRY[cfg["name"]]
+    trainer_cls = TRAINER_REGISTRY[name]
     return trainer_cls(
         model=model,
-        cfg=cfg["training"],
+        cfg=cfg,
         checkpoint_dir=checkpoint_dir,
     )
 
@@ -38,14 +38,13 @@ class ExperimentPipeline:
         self.run_id = None
 
 
-    def _fit_thresholding(self, model_cfg, scores, y_val):
+    def _fit_thresholding(self, cfg, scores, y_val): # model_cfg
         """Fit and persist a thresholding strategy, if configured."""
-        thresholding_cfg = model_cfg.get("thresholding")
 
-        if not thresholding_cfg:
+        if not cfg:
             return None, None
 
-        thresholding = Thresholding(thresholding_cfg)
+        thresholding = Thresholding(cfg)
         thresholding.fit(scores=scores, y_val=y_val)
         threshold = thresholding.get_threshold()
 
@@ -54,12 +53,12 @@ class ExperimentPipeline:
 
         return thresholding, threshold
 
-    def _evaluate(self, model, evaluator, model_cfg, X_val, y_val):
+    def _evaluate(self, model, evaluator, thresholding_cfg, X_val, y_val):
         """Score validation data, select a threshold, and compute metrics."""
         scores = model.score(X_val)
 
         thresholding, threshold = self._fit_thresholding(
-            model_cfg=model_cfg,
+            cfg=thresholding_cfg,
             scores=scores,
             y_val=y_val,
         )
@@ -94,19 +93,18 @@ class ExperimentPipeline:
 
 
         cfg = self.cfg
-        model_cfg = cfg
         metadata = metadata or {}
 
         # tags
         self.logger.log_tags({
             "run_type": "train",
-            "model_type": model_cfg["name"],
+            "model_type": cfg["name"],
             "status": "running",
         })
 
         # common and important params
         self.logger.log_params({
-            "model": model_cfg["name"],
+            "model": cfg["name"],
         })
 
         # metadata
@@ -136,7 +134,8 @@ class ExperimentPipeline:
 
         # Model
         model = build_model(
-            cfg=model_cfg,
+            name=cfg['name'],
+            cfg=cfg['models'],
             input_shape=X_train.shape[1:],
         )
         X_train = model.adapt_input(X_train)
@@ -153,8 +152,9 @@ class ExperimentPipeline:
 
         # Trainer; the trainer owns the framework-specific training details.
         trainer = build_trainer(
+            name=cfg['name'],
             model=model,
-            cfg=model_cfg,
+            cfg=cfg['training'],
             checkpoint_dir=self.logger.checkpoint_dir(),
         )
         trainer.fit(X_train, y_train, X_val_train, y_val_train)
@@ -171,7 +171,7 @@ class ExperimentPipeline:
         evaluation = self._evaluate(
             model=model,
             evaluator=evaluator,
-            model_cfg=model_cfg,
+            thresholding_cfg=cfg.get("thresholding", None),
             X_val=X_val,
             y_val=y_val,
         )
@@ -189,9 +189,9 @@ class ExperimentPipeline:
                 "threshold_config.json",
             )
 
-        # threshold logged as metric?
-
-
+            self.logger.log_params({
+                "threshold": evaluation["threshold"],
+            })
 
 
         self.logger.log_metrics(metrics)
@@ -212,7 +212,7 @@ class ExperimentPipeline:
             predictions=predictions,
         )
 
-        self.logger.log_candidate_model(model, metrics, model_cfg["name"])
+        self.logger.log_candidate_model(model, metrics, cfg["name"])
         self.logger.log_tags({"status": "finished"})
 
         return {
@@ -239,7 +239,6 @@ class ExperimentPipeline:
         """Resume training from a Lightning checkpoint in an existing MLflow run."""
 
         cfg = self.cfg
-        model_cfg = cfg
         run = None
         run_status = "FAILED"
 
@@ -303,7 +302,8 @@ class ExperimentPipeline:
             # 4. Reconstruct the model and adapt its input
             # ---------------------------------------------------------
             model = build_model(
-                cfg=model_cfg,
+                name=cfg['name'],
+                cfg=cfg['models'],
                 input_shape=X_train.shape[1:],
             )
 
@@ -316,8 +316,9 @@ class ExperimentPipeline:
             # 5. Resume Lightning training
             # ---------------------------------------------------------
             trainer = build_trainer(
+                name=cfg['name'],
                 model=model,
-                cfg=model_cfg,
+                cfg=cfg['training'],
                 checkpoint_dir=self.logger.checkpoint_dir(),
             )
 
@@ -340,11 +341,11 @@ class ExperimentPipeline:
             evaluation = self._evaluate(
                 model=model,
                 evaluator=evaluator,
-                model_cfg=model_cfg,
+                thresholding_cfg=cfg.get("thresholding", None),
                 X_val=X_val,
                 y_val=y_val,
             )
-            scores = evaluation["scores"]
+            val_scores = evaluation["scores"]
             predictions = evaluation["predictions"]
             thresholding = evaluation["thresholding"]
             threshold = evaluation["threshold"]
@@ -361,22 +362,23 @@ class ExperimentPipeline:
             if trainer.history:
                 self.logger.log_training_history(trainer.history)
 
-            """
-            diagnostics = collect_diagnostics(
+            
+            # diagnosis
+            self.logger.log_evaluation_diagnostics(
                 y_true=y_val,
-                scores=scores,
+                scores=val_scores,
                 predictions=predictions,
-                history=history,
             )
 
-            self.logger.log_diagnostics(diagnostics)
-            self.logger.log_candidate_model(
-                model,
-                metrics,
-                model_cfg["name"],
+            self.logger.log_validation_scores(
+                y_true=y_val,
+                scores=val_scores,
+                predictions=predictions,
             )
-            """
 
+
+
+            self.logger.log_candidate_model(model, metrics, cfg["name"])
             self.logger.log_tags({"status": "finished"})
             run_status = "FINISHED"
 
@@ -387,7 +389,6 @@ class ExperimentPipeline:
                 "thresholding": thresholding,
                 "threshold": threshold,
                 "metrics": metrics,
-                # "diagnostics": diagnostics,
                 "config": deepcopy(cfg),
             }
 

@@ -3,6 +3,6 @@ defaults:
   - /training: ae
   - /tuning: ae
   - /prep: ae
-  - /thresholding: ae
+  - /thresholding: constrained_f1
 
 name: ae

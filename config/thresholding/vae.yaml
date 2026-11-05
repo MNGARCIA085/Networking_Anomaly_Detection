@@ -1,3 +1,0 @@
-name: constrained_f1
-params:
-  min_recall: 0.75

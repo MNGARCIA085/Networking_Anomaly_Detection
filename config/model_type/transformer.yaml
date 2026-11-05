@@ -3,6 +3,6 @@ defaults:
   - /training: transformer
   - /tuning: transformer
   - /prep: transformer
-  - /thresholding: transformer
+  - /thresholding: constrained_f1
 
 name: transformer

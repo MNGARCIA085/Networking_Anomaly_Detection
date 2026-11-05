@@ -3,6 +3,6 @@ defaults:
   - /training: ae_isoforest
   - /tuning: ae_isoforest
   - /prep: ae
-  - /thresholding: ae
+  - /thresholding: constrained_f1
 
 name: ae_isoforest
