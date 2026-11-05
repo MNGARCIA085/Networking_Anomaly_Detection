@@ -1,6 +1,9 @@
+name: ae
+type: default
+
 batch_size: 32
 epochs: 5
-type: "default" # or "vae", "transfer"
+
 
 optimizer:
   name: adam
@@ -12,7 +15,6 @@ optimizer:
 
 loss:
   name: mse
-
 
 
 scheduler:

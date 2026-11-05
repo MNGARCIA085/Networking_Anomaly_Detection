@@ -1,6 +1,8 @@
+name: vae
+type: default
+
 batch_size: 32
 epochs: 1
-
 
 optimizer:
   name: adam

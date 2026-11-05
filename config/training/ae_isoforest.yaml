@@ -1,7 +1,9 @@
-# training/ae_isoforest.yaml
+name: ae_isoforest
+type: default
+
 batch_size: 32
 epochs: 1
-type: "default"
+
 
 optimizer:
   name: adam

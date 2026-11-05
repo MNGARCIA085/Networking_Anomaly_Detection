@@ -7,7 +7,7 @@ import mlflow
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
 
-from network_anomaly_detection.infra.selection.candidate_registry import CandidateRegistry
+from network_anomaly_detection.selection.candidate_registry import CandidateRegistry
 
 
 @hydra.main(

@@ -19,8 +19,9 @@ import matplotlib.pyplot as plt
 from .logger import ExperimentLogger
 
 from network_anomaly_detection.infra.logging.utils import flatten_dict
-from network_anomaly_detection.infra.selection.candidate_registry import CandidateRegistry
-from network_anomaly_detection.infra.selection.candidate_manager import CandidateManager
+
+from network_anomaly_detection.selection.candidate_registry import CandidateRegistry
+from network_anomaly_detection.selection.candidate_manager import CandidateManager
 
 
 

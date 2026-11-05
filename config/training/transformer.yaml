@@ -1,3 +1,6 @@
+name: transformer
+type: default
+
 batch_size: 32
 epochs: 4
 type: "default"

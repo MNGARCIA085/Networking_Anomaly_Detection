@@ -6,8 +6,8 @@ from omegaconf import DictConfig
 from hydra.utils import to_absolute_path
 
 from network_anomaly_detection.data.data_module import DataModule    
-from network_anomaly_detection.infra.selection.candidate_registry import CandidateRegistry
-from network_anomaly_detection.infra.selection.model_selector import ModelSelector
+from network_anomaly_detection.selection.candidate_registry import CandidateRegistry
+from network_anomaly_detection.selection.model_selector import ModelSelector
 from network_anomaly_detection.evaluation.evaluator import Evaluator
 from network_anomaly_detection.inference.mlflow_loader import load_from_mlflow
 
